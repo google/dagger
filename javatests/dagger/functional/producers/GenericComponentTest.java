@@ -37,9 +37,23 @@ import org.junit.runners.JUnit4;
 // Regression test for b/71595104
 @RunWith(JUnit4.class)
 public final class GenericComponentTest {
-  @ProductionComponent(modules = {ExecutorModule.class, NongenericModule.class})
+  @ProductionComponent(
+      modules = {ExecutorModule.class, NongenericModule.class, ConcreteBoundedModule.class})
   interface GenericComponent {
     ListenableFuture<List<String>> list();
+
+    ListenableFuture<List<PublicFoo>> boundedList();
+  }
+
+  public interface PublicBar<T> {
+    String value();
+  }
+
+  public static final class PublicFoo implements PublicBar<PublicFoo> {
+    @Override
+    public String value() {
+      return "bounded";
+    }
   }
 
   @Module
@@ -51,6 +65,7 @@ public final class GenericComponentTest {
     }
   }
 
+  // Tests a generic base module with an unbounded type parameter (T).
   @ProducerModule
   static final class NongenericModule extends GenericModule<String> {
     @Produces
@@ -67,10 +82,31 @@ public final class GenericComponentTest {
     }
   }
 
+  // Tests a generic base module with a self-referential upper bound (T extends PublicBar<T>).
+  @ProducerModule
+  static final class ConcreteBoundedModule extends BoundedGenericModule<PublicFoo> {
+    @Produces
+    static PublicFoo publicFoo() {
+      return new PublicFoo();
+    }
+  }
+
+  @ProducerModule
+  abstract static class BoundedGenericModule<T extends PublicBar<T>> {
+    @Produces
+    List<T> boundedList(T t) {
+      String unused = t.value();
+      return Arrays.asList(t);
+    }
+  }
+
   @Test
   public void compileTest() throws Exception {
     GenericComponent component = DaggerGenericComponentTest_GenericComponent.create();
     assertThat(component.list().isDone()).isTrue();
     assertThat(Futures.getDone(component.list())).containsExactly("string");
+    assertThat(component.boundedList().isDone()).isTrue();
+    assertThat(Futures.getDone(component.boundedList())).hasSize(1);
+    assertThat(Futures.getDone(component.boundedList()).get(0).value()).isEqualTo("bounded");
   }
 }

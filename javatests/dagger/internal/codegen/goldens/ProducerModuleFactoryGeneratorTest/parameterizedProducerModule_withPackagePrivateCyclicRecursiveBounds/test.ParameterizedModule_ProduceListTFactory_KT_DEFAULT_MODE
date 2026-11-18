@@ -11,6 +11,7 @@ import dagger.producers.monitoring.ProductionComponentMonitor
 import java.util.concurrent.Executor
 import javax.`annotation`.processing.Generated
 import kotlin.Any
+import kotlin.Nothing
 import kotlin.Suppress
 import kotlin.jvm.JvmStatic
 
@@ -24,32 +25,34 @@ import kotlin.jvm.JvmStatic
     "USELESS_CAST",
     "DEPRECATION"
 ])
-public class ParameterizedModule_ProduceListTFactory<T : Bar<T?>?> : AbstractProducesMethodProducer<Any?, Any?> {
-  private val module: ParameterizedModule<T>
+public class ParameterizedModule_ProduceListTFactory : AbstractProducesMethodProducer<Any?, Any?> {
+  private val module: Any
 
-  private val tProducer: Producer<T>
+  private val tProducer: Producer<*>
 
   private constructor(
-    module: ParameterizedModule<T>,
+    module: Any,
     executorProvider: Provider<Executor>,
     productionComponentMonitorProvider: Provider<ProductionComponentMonitor>,
-    tProducer: Producer<T>,
+    tProducer: Producer<*>,
   ) : super(productionComponentMonitorProvider, ProducerToken.create(ParameterizedModule_ProduceListTFactory::class.java), executorProvider) {
     this.module = module
     this.tProducer = Producers.nonCancellationPropagatingViewOf(tProducer)
   }
 
-  protected override fun collectDependencies(): ListenableFuture<Any?> = ((tProducer.get()) as Any) as ListenableFuture<Any?>
+  protected override fun collectDependencies(): ListenableFuture<Any?> = (tProducer.get()) as ListenableFuture<Any?>
 
-  public override fun callProducesMethod(t: Any?): ListenableFuture<Any?> = ((module.produceListT((t) as T)) as Any) as ListenableFuture<Any?>
+  public override fun callProducesMethod(t: Any?): ListenableFuture<Any?> = callProducesMethodInternal<Nothing>(t)
+
+  private fun <T : Bar<T?>?> callProducesMethodInternal(t: Any?): ListenableFuture<Any?> = (((module) as ParameterizedModule<T>).produceListT((t) as T)) as ListenableFuture<Any?>
 
   public companion object {
     @JvmStatic
-    public fun <T : Bar<T?>?> create(
+    public fun create(
       module: Any?,
       executorProvider: Provider<*>,
       productionComponentMonitorProvider: Provider<*>,
       tProducer: Producer<*>,
-    ): ParameterizedModule_ProduceListTFactory<T> = ParameterizedModule_ProduceListTFactory<T>((module) as ParameterizedModule<T>, (executorProvider) as Provider<Executor>, (productionComponentMonitorProvider) as Provider<ProductionComponentMonitor>, (tProducer) as Producer<T>)
+    ): ParameterizedModule_ProduceListTFactory = ParameterizedModule_ProduceListTFactory((module) as Any, (executorProvider) as Provider<Executor>, (productionComponentMonitorProvider) as Provider<ProductionComponentMonitor>, (tProducer) as Producer<*>)
   }
 }

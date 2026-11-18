@@ -37,7 +37,7 @@ public class TestModule_ProduceStringFactory : AbstractProducesMethodProducer<Un
 
   protected override fun collectDependencies(): ListenableFuture<Unit?> = Futures.immediateFuture(null)
 
-  public override fun callProducesMethod(ignoredVoidArg: Unit?): ListenableFuture<Any?> = ((module.produceString()) as Any) as ListenableFuture<Any?>
+  public override fun callProducesMethod(ignoredVoidArg: Unit?): ListenableFuture<Any?> = (module.produceString()) as ListenableFuture<Any?>
 
   public companion object {
     @JvmStatic

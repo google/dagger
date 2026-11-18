@@ -90,11 +90,10 @@ public final class SourceFiles {
           XClassName frameworkClassName =
               frameworkTypeMapper.getFrameworkType(dependency.kind()).frameworkClassName();
           XType type = dependency.key().type().xprocessing();
-          // TODO(b/438765237): Always pass compilerOptions once PRODUCTION and PROVISION also drop
-          // type parameters in Kotlin codegen.
+          // TODO(b/438765237): Always pass compilerOptions once PROVISION also drops type
+          // parameters in Kotlin codegen.
           boolean isTypeAccessible =
-              (binding.bindingType() != BindingType.PRODUCTION
-                      && binding.bindingType() != BindingType.PROVISION)
+              binding.bindingType() != BindingType.PROVISION
                   ? Accessibility.isTypeAccessibleFrom(
                       type, requestingClass.getPackageName(), compilerOptions)
                   : Accessibility.isTypeAccessibleFrom(type, requestingClass.getPackageName());

@@ -40,9 +40,9 @@ public class TestModule_ProduceStringFactory : AbstractProducesMethodProducer<An
     this.iProducer = Producers.nonCancellationPropagatingViewOf(iProducer)
   }
 
-  protected override fun collectDependencies(): ListenableFuture<Any?> = ((iProducer.get()) as Any) as ListenableFuture<Any?>
+  protected override fun collectDependencies(): ListenableFuture<Any?> = (iProducer.get()) as ListenableFuture<Any?>
 
-  public override fun callProducesMethod(i: Any?): ListenableFuture<Any?> = ((module.produceString((i) as Int?)) as Any) as ListenableFuture<Any?>
+  public override fun callProducesMethod(i: Any?): ListenableFuture<Any?> = (module.produceString((i) as Int?)) as ListenableFuture<Any?>
 
   public companion object {
     @JvmStatic

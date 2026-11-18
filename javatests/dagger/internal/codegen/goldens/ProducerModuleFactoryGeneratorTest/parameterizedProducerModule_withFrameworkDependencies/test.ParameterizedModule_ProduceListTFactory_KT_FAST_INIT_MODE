@@ -2,9 +2,9 @@ package test
 
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import dagger.Lazy
 import dagger.`internal`.DaggerGenerated
 import dagger.`internal`.DoubleCheck
-import dagger.`internal`.Provider
 import dagger.`internal`.ProviderOfLazy
 import dagger.producers.Producer
 import dagger.producers.`internal`.AbstractProducesMethodProducer
@@ -14,9 +14,12 @@ import dagger.producers.monitoring.ProductionComponentMonitor
 import java.util.concurrent.Executor
 import javax.`annotation`.processing.Generated
 import kotlin.Any
+import kotlin.Nothing
 import kotlin.Suppress
 import kotlin.Unit
 import kotlin.jvm.JvmStatic
+import dagger.`internal`.Provider as InternalProvider
+import javax.inject.Provider as InjectProvider
 
 @DaggerGenerated
 @Generated(
@@ -28,25 +31,25 @@ import kotlin.jvm.JvmStatic
     "USELESS_CAST",
     "DEPRECATION"
 ])
-public class ParameterizedModule_ProduceListTFactory<T> : AbstractProducesMethodProducer<Unit?, Any?> {
-  private val module: ParameterizedModule<T>
+public class ParameterizedModule_ProduceListTFactory : AbstractProducesMethodProducer<Unit?, Any?> {
+  private val module: Any
 
-  private val tProducer: Producer<T?>
+  private val tProducer: Producer<*>
 
-  private val tProvider: Provider<T?>
+  private val tProvider: InternalProvider<*>
 
-  private val tLazyProvider: Provider<T?>
+  private val tLazyProvider: InternalProvider<*>
 
-  private val tProviderOfLazyProvider: Provider<T?>
+  private val tProviderOfLazyProvider: InternalProvider<*>
 
   private constructor(
-    module: ParameterizedModule<T>,
-    executorProvider: Provider<Executor>,
-    productionComponentMonitorProvider: Provider<ProductionComponentMonitor>,
-    tProducer: Producer<T?>,
-    tProvider: Provider<T?>,
-    tLazyProvider: Provider<T?>,
-    tProviderOfLazyProvider: Provider<T?>,
+    module: Any,
+    executorProvider: InternalProvider<Executor>,
+    productionComponentMonitorProvider: InternalProvider<ProductionComponentMonitor>,
+    tProducer: Producer<*>,
+    tProvider: InternalProvider<*>,
+    tLazyProvider: InternalProvider<*>,
+    tProviderOfLazyProvider: InternalProvider<*>,
   ) : super(productionComponentMonitorProvider, ProducerToken.create(ParameterizedModule_ProduceListTFactory::class.java), executorProvider) {
     this.module = module
     this.tProducer = Producers.nonCancellationPropagatingViewOf(tProducer)
@@ -57,18 +60,20 @@ public class ParameterizedModule_ProduceListTFactory<T> : AbstractProducesMethod
 
   protected override fun collectDependencies(): ListenableFuture<Unit?> = Futures.immediateFuture(null)
 
-  public override fun callProducesMethod(ignoredVoidArg: Unit?): ListenableFuture<Any?> = ((module.produceListT(tProducer, tProvider, DoubleCheck.lazy(tLazyProvider), ProviderOfLazy.create(tProviderOfLazyProvider))) as Any) as ListenableFuture<Any?>
+  public override fun callProducesMethod(ignoredVoidArg: Unit?): ListenableFuture<Any?> = callProducesMethodInternal<Nothing>(ignoredVoidArg)
+
+  private fun <T> callProducesMethodInternal(ignoredVoidArg: Unit?): ListenableFuture<Any?> = (((module) as ParameterizedModule<T>).produceListT((tProducer) as Producer<T?>?, (tProvider) as InjectProvider<T?>?, (DoubleCheck.lazy(tLazyProvider)) as Lazy<T?>?, (ProviderOfLazy.create(tProviderOfLazyProvider)) as InjectProvider<Lazy<T?>?>?)) as ListenableFuture<Any?>
 
   public companion object {
     @JvmStatic
-    public fun <T> create(
+    public fun create(
       module: Any?,
-      executorProvider: Provider<*>,
-      productionComponentMonitorProvider: Provider<*>,
+      executorProvider: InternalProvider<*>,
+      productionComponentMonitorProvider: InternalProvider<*>,
       tProducer: Producer<*>,
-      tProvider: Provider<*>,
-      tLazyProvider: Provider<*>,
-      tProviderOfLazyProvider: Provider<*>,
-    ): ParameterizedModule_ProduceListTFactory<T> = ParameterizedModule_ProduceListTFactory<T>((module) as ParameterizedModule<T>, (executorProvider) as Provider<Executor>, (productionComponentMonitorProvider) as Provider<ProductionComponentMonitor>, (tProducer) as Producer<T?>, (tProvider) as Provider<T?>, (tLazyProvider) as Provider<T?>, (tProviderOfLazyProvider) as Provider<T?>)
+      tProvider: InternalProvider<*>,
+      tLazyProvider: InternalProvider<*>,
+      tProviderOfLazyProvider: InternalProvider<*>,
+    ): ParameterizedModule_ProduceListTFactory = ParameterizedModule_ProduceListTFactory((module) as Any, (executorProvider) as InternalProvider<Executor>, (productionComponentMonitorProvider) as InternalProvider<ProductionComponentMonitor>, (tProducer) as Producer<*>, (tProvider) as InternalProvider<*>, (tLazyProvider) as InternalProvider<*>, (tProviderOfLazyProvider) as InternalProvider<*>)
   }
 }

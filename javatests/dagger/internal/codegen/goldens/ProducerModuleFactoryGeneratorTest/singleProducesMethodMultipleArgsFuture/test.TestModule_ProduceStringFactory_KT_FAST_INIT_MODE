@@ -54,7 +54,7 @@ public class TestModule_ProduceStringFactory : AbstractProducesMethodProducer<Li
   }
 
   @Suppress(names = ["UNCHECKED_CAST"])
-  public override fun callProducesMethod(args: List<Any>): ListenableFuture<Any?> = ((module.produceString((args.get(0)) as Int?, (args.get(1)) as Long?)) as Any) as ListenableFuture<Any?>
+  public override fun callProducesMethod(args: List<Any>): ListenableFuture<Any?> = (module.produceString((args.get(0)) as Int?, (args.get(1)) as Long?)) as ListenableFuture<Any?>
 
   public companion object {
     @JvmStatic

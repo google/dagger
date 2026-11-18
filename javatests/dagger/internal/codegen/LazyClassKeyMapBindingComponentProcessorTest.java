@@ -371,6 +371,40 @@ public class LazyClassKeyMapBindingComponentProcessorTest {
   }
 
   @Test
+  public void testProguardFile_nestedKey() throws Exception {
+    Source outerClass =
+        CompilerTests.javaSource(
+            "test.OuterClass",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.LazyClassKey;",
+            "import dagger.multibindings.IntoMap;",
+            "",
+            "public interface OuterClass {",
+            "  interface FooKey {}",
+            "",
+            "  @Module",
+            "  public interface FooKeyModule {",
+            "    @Provides",
+            "    @IntoMap",
+            "    @LazyClassKey(FooKey.class)",
+            "    static String provideString() { return \"\"; }",
+            "  }",
+            "}");
+    CompilerTests.daggerCompiler(outerClass)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          subject
+              .generatedTextResourceFileWithPath(
+                  "META-INF/proguard/test_OuterClass_FooKeyModule_LazyClassKeys.pro")
+              .isEqualTo("-keep,allowobfuscation,allowshrinking class test.OuterClass$FooKey");
+        });
+  }
+
+  @Test
   public void testProguardFile_nestedModule() throws Exception {
     Source fooKey =
         CompilerTests.javaSource(

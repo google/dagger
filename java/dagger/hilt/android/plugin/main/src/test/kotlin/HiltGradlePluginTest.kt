@@ -166,45 +166,137 @@ class HiltGradlePluginTest {
   @Test
   fun test_kmp_android_library() {
     val projectFolder = testProjectDir.root
-    File(projectFolder, "build.gradle").writeText(
-      """
-      plugins {
-        id 'org.jetbrains.kotlin.multiplatform' version '2.1.0'
-        id 'com.android.kotlin.multiplatform.library' version '9.0.0'
-        id 'com.google.devtools.ksp'
-        id 'com.google.dagger.hilt.android'
-      }
-
-      kotlin {
-        androidLibrary {
-          namespace 'minimal.kmp'
-          compileSdk 36
-          minSdk 21
+    File(projectFolder, "build.gradle")
+      .writeText(
+        """
+        plugins {
+          id 'org.jetbrains.kotlin.multiplatform' version '2.1.0'
+          id 'com.android.kotlin.multiplatform.library' version '9.0.0'
+          id 'com.google.devtools.ksp'
+          id 'com.google.dagger.hilt.android'
         }
-      }
 
-      allprojects {
-        repositories {
-          mavenLocal()
-          google()
-          mavenCentral()
+        kotlin {
+          androidLibrary {
+            namespace 'minimal.kmp'
+            compileSdk 36
+            minSdk 21
+          }
         }
-      }
 
-      dependencies {
-        add("androidMainImplementation", "com.google.dagger:hilt-android:LOCAL-SNAPSHOT")
-        add("ksp", "com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT")
-        add("androidMainImplementation", "javax.inject:javax.inject:1")
-      }
-      """.trimIndent()
-    )
-    val result = org.gradle.testkit.runner.GradleRunner.create()
-      .withProjectDir(projectFolder)
-      .withArguments("assemble")
-      .withPluginClasspath()
-      .forwardOutput()
-      .build()
+        allprojects {
+          repositories {
+            mavenLocal()
+            google()
+            mavenCentral()
+          }
+        }
+
+        dependencies {
+          add("androidMainImplementation", "com.google.dagger:hilt-android:LOCAL-SNAPSHOT")
+          add("ksp", "com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT")
+          add("androidMainImplementation", "javax.inject:javax.inject:1")
+        }
+        """
+          .trimIndent()
+      )
+    val result =
+      org.gradle.testkit.runner.GradleRunner.create()
+        .withProjectDir(projectFolder)
+        .withArguments("assemble")
+        .withPluginClasspath()
+        .forwardOutput()
+        .build()
 
     assertThat(result.output).contains("BUILD SUCCESSFUL")
+  }
+
+  @Test
+  fun test_r8_hiltViewModel() {
+    gradleRunner.addPluginId("com.google.devtools.ksp")
+    gradleRunner.addDependencies(
+      "implementation 'androidx.appcompat:appcompat:1.3.1'",
+      "implementation 'androidx.lifecycle:lifecycle-viewmodel:2.5.1'",
+      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
+      "ksp 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'",
+    )
+    gradleRunner.addAndroidOption(
+      """
+      buildTypes {
+        debug {
+          debuggable false
+          minifyEnabled true
+          proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+        }
+      }
+      """
+        .trimIndent()
+    )
+    gradleRunner.addActivities("<activity android:name=\".MyActivity\"/>")
+    gradleRunner.setAppClassName(".MyApp")
+    gradleRunner.addSrc(
+      srcPath = "minimal/MyApp.java",
+      srcContent =
+        """
+        package minimal;
+
+        import android.app.Application;
+        import dagger.hilt.android.HiltAndroidApp;
+
+        @HiltAndroidApp
+        public class MyApp extends Application {}
+        """
+          .trimIndent(),
+    )
+    gradleRunner.addSrc(
+      srcPath = "minimal/MyActivity.java",
+      srcContent =
+        """
+        package minimal;
+
+        import android.os.Bundle;
+        import androidx.appcompat.app.AppCompatActivity;
+        import androidx.lifecycle.ViewModel;
+        import androidx.lifecycle.ViewModelProvider;
+        import dagger.hilt.android.AndroidEntryPoint;
+        import dagger.hilt.android.lifecycle.HiltViewModel;
+        import javax.inject.Inject;
+
+        @AndroidEntryPoint
+        public class MyActivity extends AppCompatActivity {
+          @Override
+          protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            new ViewModelProvider(this).get(ViewModelA.class);
+            new ViewModelProvider(this).get(ViewModelB.class);
+          }
+
+          @HiltViewModel
+          static class ViewModelA extends ViewModel {
+            @Inject
+            ViewModelA() {}
+          }
+
+          @HiltViewModel
+          static class ViewModelB extends ViewModel {
+            @Inject
+            ViewModelB() {}
+          }
+        }
+        """
+          .trimIndent(),
+    )
+
+    gradleRunner.build()
+
+    val configFile = File(testProjectDir.root, "build/outputs/mapping/debug/configuration.txt")
+    val configText = configFile.readText()
+    assertThat(configText)
+      .contains("-keep,allowobfuscation,allowshrinking class minimal.MyActivity\$ViewModelA")
+    assertThat(configText)
+      .contains("-keep,allowobfuscation,allowshrinking class minimal.MyActivity\$ViewModelB")
+    val seedsFile = File(testProjectDir.root, "build/outputs/mapping/debug/seeds.txt")
+    assertThat(seedsFile.readLines())
+      .containsAtLeast("minimal.MyActivity\$ViewModelA", "minimal.MyActivity\$ViewModelB")
   }
 }

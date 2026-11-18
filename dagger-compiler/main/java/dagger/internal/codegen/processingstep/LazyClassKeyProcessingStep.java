@@ -102,27 +102,26 @@ final class LazyClassKeyProcessingStep extends TypeCheckingProcessingStep<XEleme
     super.processOver(env, elementsByAnnotation);
     lazyMapKeysByModule
         .asMap()
-        .forEach(
-            (moduleClassName, lazyClassKeys) -> {
-              // Note: we could probably get better incremental performance by using the method
-              // element instead of the module element as the originating element. However, that
-              // would require appending the method name to each proguard file, which would probably
-              // cause issues with the filename length limit (256 characters) given it already must
-              // include the module's fully qualified name.
-              XTypeElement originatingElement = env.requireTypeElement(moduleClassName);
+        .forEach((moduleClassName, lazyClassKeys) -> {
+          // Note: we could probably get better incremental performance by using the method
+          // element instead of the module element as the originating element. However, that
+          // would require appending the method name to each proguard file, which would probably
+          // cause issues with the filename length limit (256 characters) given it already must
+          // include the module's fully qualified name.
+          XTypeElement originatingElement = env.requireTypeElement(moduleClassName);
 
-              Path proguardFile =
-                  Path.of(
-                      "META-INF/proguard",
-                      getFullyQualifiedEnclosedClassName(moduleClassName) + "_LazyClassKeys.pro");
+          Path proguardFile =
+              Path.of(
+                  "META-INF/proguard",
+                  getFullyQualifiedEnclosedClassName(moduleClassName) + "_LazyClassKeys.pro");
 
-              String proguardFileContents =
-                  lazyClassKeys.stream()
-                      .map(lazyClassKey -> PROGUARD_KEEP_RULE + lazyClassKey.getCanonicalName())
-                      .collect(joining("\n"));
+          String proguardFileContents =
+              lazyClassKeys.stream()
+                  .map(lazyClassKey -> PROGUARD_KEEP_RULE + lazyClassKey.getReflectionName())
+                  .collect(joining("\n"));
 
-              writeResource(env.getFiler(), originatingElement, proguardFile, proguardFileContents);
-            });
+          writeResource(env.getFiler(), originatingElement, proguardFile, proguardFileContents);
+        });
     // Processing is over so this shouldn't matter, but clear the map just incase.
     lazyMapKeysByModule.clear();
   }

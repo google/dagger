@@ -8,6 +8,7 @@ import dagger.`internal`.QualifierMetadata
 import dagger.`internal`.ScopeMetadata
 import javax.`annotation`.processing.Generated
 import kotlin.Any
+import kotlin.Nothing
 import kotlin.Suppress
 import kotlin.jvm.JvmStatic
 
@@ -23,23 +24,25 @@ import kotlin.jvm.JvmStatic
     "USELESS_CAST",
     "DEPRECATION"
 ])
-public class ParameterizedModule_ProvideMapFactory<T1, T2 : Bar<T1?>?> : Factory<Any?> {
-  private val module: ParameterizedModule<T1, T2>
+public class ParameterizedModule_ProvideMapFactory : Factory<Any?> {
+  private val module: Any
 
-  private val t1Provider: Provider<T1>
+  private val t1Provider: Provider<*>
 
-  private constructor(module: ParameterizedModule<T1, T2>, t1Provider: Provider<T1>) {
+  private constructor(module: Any, t1Provider: Provider<*>) {
     this.module = module
     this.t1Provider = t1Provider
   }
 
-  public override fun `get`(): Any? = provideMap<T1, T2>(module, t1Provider.get())
+  public override fun `get`(): Any? = provideMap(module, t1Provider.get())
 
   public companion object {
     @JvmStatic
-    public fun <T1, T2 : Bar<T1?>?> create(module: Any?, t1Provider: Provider<*>): ParameterizedModule_ProvideMapFactory<T1, T2> = ParameterizedModule_ProvideMapFactory<T1, T2>((module) as ParameterizedModule<T1, T2>, (t1Provider) as Provider<T1>)
+    public fun create(module: Any?, t1Provider: Provider<*>): ParameterizedModule_ProvideMapFactory = ParameterizedModule_ProvideMapFactory((module) as Any, (t1Provider) as Provider<*>)
 
     @JvmStatic
-    public fun <T1, T2 : Bar<T1?>?> provideMap(instance: Any?, t1: Any?): Any? = Preconditions.checkNotNullFromProvides(((instance) as ParameterizedModule<T1, T2>).provideMap((t1) as T1))
+    public fun provideMap(instance: Any?, t1: Any?): Any? = provideMapInternal<Nothing, Nothing>(instance, t1)
+
+    private fun <T1, T2 : Bar<T1?>?> provideMapInternal(instance: Any?, t1: Any?): Any? = Preconditions.checkNotNullFromProvides(((instance) as ParameterizedModule<T1, T2>).provideMap((t1) as T1))
   }
 }

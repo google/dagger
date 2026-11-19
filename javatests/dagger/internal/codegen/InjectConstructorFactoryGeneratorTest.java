@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.util.CompilationResultSubject;
 import androidx.room3.compiler.processing.util.Source;
@@ -254,7 +253,6 @@ public final class InjectConstructorFactoryGeneratorTest {
 
   @Test
   public void boundedGenerics_withPackagePrivateDependency() {
-
     Source genericClass =
         CompilerTests.javaSource(
             "test.GenericClass",

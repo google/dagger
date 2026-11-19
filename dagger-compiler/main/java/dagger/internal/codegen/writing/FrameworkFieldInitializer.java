@@ -18,6 +18,7 @@ package dagger.internal.codegen.writing;
 
 import static androidx.room3.compiler.codegen.compat.XConverters.toJavaPoet;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.binding.SourceFiles.bindingTypeElementTypeVariableNames;
 import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.writing.ComponentImplementation.FieldSpecKind.FRAMEWORK_FIELD;
 import static dagger.internal.codegen.xprocessing.XAnnotationSpecs.Suppression.RAWTYPES;
@@ -170,7 +171,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
               .map(XTypeArgument::asTypeName)
               .toArray(XTypeName[]::new);
       fieldType =
-          typeParameters.length == 0
+          bindingTypeElementTypeVariableNames(binding).isEmpty() || typeParameters.length == 0
               ? generatedClassNameForBinding(binding)
               : generatedClassNameForBinding(binding).parametrizedBy(typeParameters);
     }

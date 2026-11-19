@@ -2,7 +2,6 @@ package other;
 
 import dagger.internal.DaggerGenerated;
 import javax.annotation.processing.Generated;
-import test.Bar;
 import test.BarModule_ProvideBarFactory;
 import test.Foo_Factory;
 import test.GenericClass_Factory;
@@ -53,7 +52,7 @@ final class DaggerMyComponent {
     }
 
     Object genericClassOfFooAndBarOfFoo() {
-      return GenericClass_Factory.<Object, Bar<Object>>newInstance(Foo_Factory.newInstance(), BarModule_ProvideBarFactory.provideBar());
+      return GenericClass_Factory.newInstance(Foo_Factory.newInstance(), BarModule_ProvideBarFactory.provideBar());
     }
 
     @Override

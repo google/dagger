@@ -609,10 +609,9 @@ public class AssistedFactoryTest {
 
     // TODO(b/532992111): Fix javac visibility errors when using generic @AssistedFactory interfaces
     // across packages with package-private type arguments.
-    daggerCompiler.compile(
-        subject -> {
-          subject.hasErrorContaining("PackagePrivateBar");
-        });
+    daggerCompiler.compile(subject -> {
+      subject.hasErrorContaining("PackagePrivateBar");
+    });
   }
 
   @Test

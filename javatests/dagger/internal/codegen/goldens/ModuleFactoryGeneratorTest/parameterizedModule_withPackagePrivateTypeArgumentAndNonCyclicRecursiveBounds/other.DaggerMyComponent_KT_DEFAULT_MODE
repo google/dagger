@@ -3,7 +3,6 @@ package other;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Preconditions;
 import javax.annotation.processing.Generated;
-import test.Bar;
 import test.ConcreteModule;
 import test.Foo_Factory;
 import test.ParameterizedModule_ProvideMapFactory;
@@ -66,7 +65,7 @@ final class DaggerMyComponent {
     }
 
     Object mapOfFooAndBarOfFoo() {
-      return ParameterizedModule_ProvideMapFactory.<Object, Bar<Object>>provideMap(concreteModule, Foo_Factory.newInstance());
+      return ParameterizedModule_ProvideMapFactory.provideMap(concreteModule, Foo_Factory.newInstance());
     }
 
     @Override

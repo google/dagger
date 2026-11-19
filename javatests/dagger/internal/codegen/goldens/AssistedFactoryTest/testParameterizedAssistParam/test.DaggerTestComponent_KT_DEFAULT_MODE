@@ -42,7 +42,7 @@ final class DaggerTestComponent {
   private static final class ComponentImpl implements TestComponent {
     private final ComponentImpl componentImpl = this;
 
-    Foo_Factory<String> fooProvider;
+    Foo_Factory fooProvider;
 
     /**
      * {@code Provider<FooFactory<String>>}

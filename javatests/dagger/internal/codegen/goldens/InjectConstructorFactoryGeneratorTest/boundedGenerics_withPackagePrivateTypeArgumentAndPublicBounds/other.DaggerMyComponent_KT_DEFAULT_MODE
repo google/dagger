@@ -2,7 +2,6 @@ package other;
 
 import dagger.internal.DaggerGenerated;
 import javax.annotation.processing.Generated;
-import test.Bar;
 import test.Foo_Factory;
 import test.GenericClass_Factory;
 import test.Usage;
@@ -52,7 +51,7 @@ final class DaggerMyComponent {
     }
 
     Object genericClassOfFoo() {
-      return GenericClass_Factory.<Bar>newInstance(Foo_Factory.newInstance());
+      return GenericClass_Factory.newInstance(Foo_Factory.newInstance());
     }
 
     @Override

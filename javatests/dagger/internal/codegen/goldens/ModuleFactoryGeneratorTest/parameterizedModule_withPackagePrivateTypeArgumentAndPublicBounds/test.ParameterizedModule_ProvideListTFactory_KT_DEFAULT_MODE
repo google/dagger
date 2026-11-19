@@ -8,6 +8,7 @@ import dagger.`internal`.QualifierMetadata
 import dagger.`internal`.ScopeMetadata
 import javax.`annotation`.processing.Generated
 import kotlin.Any
+import kotlin.Nothing
 import kotlin.Suppress
 import kotlin.jvm.JvmStatic
 
@@ -23,23 +24,25 @@ import kotlin.jvm.JvmStatic
     "USELESS_CAST",
     "DEPRECATION"
 ])
-public class ParameterizedModule_ProvideListTFactory<T : Bar?> : Factory<Any?> {
-  private val module: ParameterizedModule<T>
+public class ParameterizedModule_ProvideListTFactory : Factory<Any?> {
+  private val module: Any
 
-  private val tProvider: Provider<T>
+  private val tProvider: Provider<*>
 
-  private constructor(module: ParameterizedModule<T>, tProvider: Provider<T>) {
+  private constructor(module: Any, tProvider: Provider<*>) {
     this.module = module
     this.tProvider = tProvider
   }
 
-  public override fun `get`(): Any? = provideListT<T>(module, tProvider.get())
+  public override fun `get`(): Any? = provideListT(module, tProvider.get())
 
   public companion object {
     @JvmStatic
-    public fun <T : Bar?> create(module: Any?, tProvider: Provider<*>): ParameterizedModule_ProvideListTFactory<T> = ParameterizedModule_ProvideListTFactory<T>((module) as ParameterizedModule<T>, (tProvider) as Provider<T>)
+    public fun create(module: Any?, tProvider: Provider<*>): ParameterizedModule_ProvideListTFactory = ParameterizedModule_ProvideListTFactory((module) as Any, (tProvider) as Provider<*>)
 
     @JvmStatic
-    public fun <T : Bar?> provideListT(instance: Any?, t: Any?): Any? = Preconditions.checkNotNullFromProvides(((instance) as ParameterizedModule<T>).provideListT((t) as T))
+    public fun provideListT(instance: Any?, t: Any?): Any? = provideListTInternal<Nothing>(instance, t)
+
+    private fun <T : Bar?> provideListTInternal(instance: Any?, t: Any?): Any? = Preconditions.checkNotNullFromProvides(((instance) as ParameterizedModule<T>).provideListT((t) as T))
   }
 }

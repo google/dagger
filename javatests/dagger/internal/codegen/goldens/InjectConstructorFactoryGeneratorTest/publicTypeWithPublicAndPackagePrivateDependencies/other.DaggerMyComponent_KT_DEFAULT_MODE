@@ -6,7 +6,6 @@ import test.Foo;
 import test.Foo_Factory;
 import test.GenericDep_Factory;
 import test.PackagePrivateDep_Factory;
-import test.PublicDep;
 import test.PublicDep_Factory;
 
 @DaggerGenerated
@@ -53,11 +52,11 @@ final class DaggerMyComponent {
     }
 
     Object genericDepOfPublicDep() {
-      return GenericDep_Factory.<PublicDep>newInstance(PublicDep_Factory.newInstance());
+      return GenericDep_Factory.newInstance(PublicDep_Factory.newInstance());
     }
 
     Object genericDepOfPackagePrivateDep() {
-      return GenericDep_Factory.<Object>newInstance(PackagePrivateDep_Factory.newInstance());
+      return GenericDep_Factory.newInstance(PackagePrivateDep_Factory.newInstance());
     }
 
     @Override

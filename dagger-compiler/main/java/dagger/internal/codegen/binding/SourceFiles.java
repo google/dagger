@@ -90,17 +90,13 @@ public final class SourceFiles {
           XClassName frameworkClassName =
               frameworkTypeMapper.getFrameworkType(dependency.kind()).frameworkClassName();
           XType type = dependency.key().type().xprocessing();
-          // TODO(b/438765237): Always pass compilerOptions once PROVISION also drops type
-          // parameters in Kotlin codegen.
-          boolean isTypeAccessible =
-              binding.bindingType() != BindingType.PROVISION
-                  ? Accessibility.isTypeAccessibleFrom(
-                      type, requestingClass.getPackageName(), compilerOptions)
-                  : Accessibility.isTypeAccessibleFrom(type, requestingClass.getPackageName());
           return FrameworkField.create(
               DependencyVariableNamer.name(dependency),
               frameworkClassName,
-              isTypeAccessible ? Optional.of(type) : Optional.empty(),
+              Accessibility.isTypeAccessibleFrom(
+                      type, requestingClass.getPackageName(), compilerOptions)
+                  ? Optional.of(type)
+                  : Optional.empty(),
               compilerOptions);
         });
   }

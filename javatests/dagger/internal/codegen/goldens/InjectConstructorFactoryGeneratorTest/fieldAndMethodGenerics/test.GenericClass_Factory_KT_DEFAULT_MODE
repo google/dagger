@@ -7,6 +7,7 @@ import dagger.`internal`.QualifierMetadata
 import dagger.`internal`.ScopeMetadata
 import javax.`annotation`.processing.Generated
 import kotlin.Any
+import kotlin.Nothing
 import kotlin.Suppress
 import kotlin.jvm.JvmStatic
 
@@ -22,18 +23,18 @@ import kotlin.jvm.JvmStatic
     "USELESS_CAST",
     "DEPRECATION"
 ])
-public class GenericClass_Factory<A, B> : Factory<Any?> {
-  private val aProvider: Provider<A>
+public class GenericClass_Factory : Factory<Any?> {
+  private val aProvider: Provider<*>
 
-  private val bProvider: Provider<B>
+  private val bProvider: Provider<*>
 
-  private constructor(aProvider: Provider<A>, bProvider: Provider<B>) {
+  private constructor(aProvider: Provider<*>, bProvider: Provider<*>) {
     this.aProvider = aProvider
     this.bProvider = bProvider
   }
 
   public override fun `get`(): Any? {
-    var instance: Any? = newInstance<A, B>()
+    var instance: Any? = newInstance()
     GenericClass_MembersInjector.injectA(instance, aProvider.get());
     GenericClass_MembersInjector.injectRegister(instance, bProvider.get());
     return instance
@@ -41,9 +42,11 @@ public class GenericClass_Factory<A, B> : Factory<Any?> {
 
   public companion object {
     @JvmStatic
-    public fun <A, B> create(aProvider: Provider<*>, bProvider: Provider<*>): GenericClass_Factory<A, B> = GenericClass_Factory<A, B>((aProvider) as Provider<A>, (bProvider) as Provider<B>)
+    public fun create(aProvider: Provider<*>, bProvider: Provider<*>): GenericClass_Factory = GenericClass_Factory((aProvider) as Provider<*>, (bProvider) as Provider<*>)
 
     @JvmStatic
-    public fun <A, B> newInstance(): Any? = GenericClass<A, B>()
+    public fun newInstance(): Any? = newInstanceInternal<Nothing, Nothing>()
+
+    private fun <A, B> newInstanceInternal(): Any? = GenericClass<A, B>()
   }
 }

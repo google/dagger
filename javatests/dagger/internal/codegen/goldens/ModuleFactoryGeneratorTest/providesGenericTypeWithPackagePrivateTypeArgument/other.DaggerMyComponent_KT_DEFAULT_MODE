@@ -6,7 +6,6 @@ import test.Bar_Factory;
 import test.Baz_Factory;
 import test.MyModule_ProvideFooBarFactory;
 import test.MyModule_ProvideFooPublicBarFactory;
-import test.PublicBar;
 import test.PublicBar_Factory;
 import test.Usage;
 import test.Usage_Factory;
@@ -55,7 +54,7 @@ final class DaggerMyComponent {
     }
 
     Object bazOfBar() {
-      return Baz_Factory.<Object>newInstance(Bar_Factory.newInstance());
+      return Baz_Factory.newInstance(Bar_Factory.newInstance());
     }
 
     Object fooOfBar() {
@@ -63,7 +62,7 @@ final class DaggerMyComponent {
     }
 
     Object bazOfPublicBar() {
-      return Baz_Factory.<PublicBar>newInstance(PublicBar_Factory.newInstance());
+      return Baz_Factory.newInstance(PublicBar_Factory.newInstance());
     }
 
     Object fooOfPublicBar() {

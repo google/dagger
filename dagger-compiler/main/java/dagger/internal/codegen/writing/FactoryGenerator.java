@@ -26,7 +26,6 @@ import static dagger.internal.codegen.binding.SourceFiles.parameterizedGenerated
 import static dagger.internal.codegen.extension.DaggerStreams.presentValues;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.model.BindingKind.INJECTION;
-import static dagger.internal.codegen.model.BindingKind.PROVISION;
 import static dagger.internal.codegen.writing.GwtCompatibility.gwtIncompatibleAnnotation;
 import static dagger.internal.codegen.writing.InjectionMethods.copyFrameworkParameter;
 import static dagger.internal.codegen.writing.InjectionMethods.copyParameter;
@@ -155,7 +154,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ContributionBind
     return factoryBuilder
         .addFunction(getMethod(binding, factoryFields))
         .addFunction(staticCreateMethod(binding, factoryFields))
-        .addFunction(staticProxyMethod(binding))
+        .addFunctions(staticProxyMethods(binding))
         .build();
   }
 
@@ -244,7 +243,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ContributionBind
                 copyParameter(
                     createMethodBuilder,
                     moduleName,
-                    moduleType.asTypeName(),
+                    module.getType(),
                     Nullability.NOT_NULLABLE,
                     /* isTypeNameAccessible= */
                     isTypeAccessibleFromPublicApi(moduleType, compilerOptions),
@@ -304,15 +303,21 @@ public final class FactoryGenerator extends SourceFileGenerator<ContributionBind
             .collect(
                 toImmutableMap(
                     parameter -> parameter,
-                    parameter ->
-                        copyParameter(
-                            getMethod,
-                            uniqueFieldNames.getUniqueName(parameter.getJvmName()),
-                            parameter.getType().asTypeName(),
-                            Nullability.of(parameter),
-                            /* isTypeNameAccessible= */
-                            isTypeAccessibleFromPublicApi(parameter.getType(), compilerOptions),
-                            compilerOptions)));
+                    parameter -> {
+                      boolean eraseTypeParameter =
+                          shouldEraseTypeParameter(parameter.getType(), compilerOptions);
+                      return copyParameter(
+                          getMethod,
+                          uniqueFieldNames.getUniqueName(parameter.getJvmName()),
+                          eraseTypeParameter
+                              ? XTypeName.ANY_OBJECT.copy(/* nullable= */ true)
+                              : parameter.getType().asTypeName(),
+                          Nullability.of(parameter),
+                          /* isTypeNameAccessible= */ eraseTypeParameter
+                              || isTypeAccessibleFromPublicApi(
+                                  parameter.getType(), compilerOptions),
+                          compilerOptions);
+                    }));
 
     XCodeBlock invokeNewInstance =
         ProvisionMethod.invoke(
@@ -349,13 +354,13 @@ public final class FactoryGenerator extends SourceFileGenerator<ContributionBind
     return getMethod.build();
   }
 
-  private XFunSpec staticProxyMethod(ContributionBinding binding) {
+  private ImmutableList<XFunSpec> staticProxyMethods(ContributionBinding binding) {
     switch (binding.kind()) {
       case INJECTION:
       case ASSISTED_INJECTION:
-        return staticProxyMethodForInjection(binding);
+        return staticProxyMethodsForInjection(binding);
       case PROVISION:
-        return staticProxyMethodForProvision((ProvisionBinding) binding);
+        return staticProxyMethodsForProvision((ProvisionBinding) binding);
       default:
         throw new AssertionError("Unexpected binding kind: " + binding);
     }
@@ -366,23 +371,21 @@ public final class FactoryGenerator extends SourceFileGenerator<ContributionBind
   // public static Foo newInstance(Bar bar, Baz baz) {
   //   return new Foo(bar, baz);
   // }
-  private XFunSpec staticProxyMethodForInjection(ContributionBinding binding) {
+  private ImmutableList<XFunSpec> staticProxyMethodsForInjection(ContributionBinding binding) {
     XConstructorElement constructor = asConstructor(binding.bindingElement().get());
     XTypeElement enclosingType = constructor.getEnclosingElement();
     XFunSpecs.Builder builder =
         methodBuilder(generatedProxyMethodName(binding))
-            .addModifiers(PUBLIC, STATIC)
             .varargs(constructor.isVarArgs())
             .returns(providedTypeName(binding))
-            .addTypeVariableNames(typeVariableNames(enclosingType))
             .addExceptions(constructor.getThrownTypes());
     XCodeBlock arguments =
         copyParameters(builder, new UniqueNameSet(), constructor.getParameters(), compilerOptions);
-    return builder
-        .addStatement(
-            "return %L",
-            XCodeBlock.ofNewInstance(enclosingType.getType().asTypeName(), "%L", arguments))
-        .build();
+    return buildStaticProxyMethods(
+        binding,
+        typeVariableNames(enclosingType),
+        builder,
+        XCodeBlock.ofNewInstance(enclosingType.getType().asTypeName(), "%L", arguments));
   }
 
   // Example:
@@ -390,21 +393,21 @@ public final class FactoryGenerator extends SourceFileGenerator<ContributionBind
   // public static Foo provideFoo(FooModule module, Bar bar, Baz baz) {
   //   return Preconditions.checkNotNullFromProvides(module.provideFoo(bar, baz));
   // }
-  private XFunSpec staticProxyMethodForProvision(ProvisionBinding binding) {
+  private ImmutableList<XFunSpec> staticProxyMethodsForProvision(ProvisionBinding binding) {
     XMethodElement method = asMethod(binding.bindingElement().get());
     XFunSpecs.Builder builder =
         methodBuilder(generatedProxyMethodName(binding))
-            .addModifiers(PUBLIC, STATIC)
             .varargs(method.isVarArgs())
             .addExceptions(method.getThrownTypes());
 
     XTypeElement enclosingType = asTypeElement(method.getEnclosingElement());
     UniqueNameSet parameterNameSet = new UniqueNameSet();
+    ImmutableList<XTypeName> typeVariableNames = ImmutableList.of();
     XCodeBlock module;
     if (method.isStatic() || enclosingType.isKotlinObject()) {
       module = staticReferenceOf(enclosingType);
     } else {
-      builder.addTypeVariableNames(typeVariableNames(enclosingType));
+      typeVariableNames = typeVariableNames(enclosingType);
       module = copyInstance(builder, parameterNameSet, enclosingType.getType());
     }
     XCodeBlock arguments =
@@ -413,11 +416,24 @@ public final class FactoryGenerator extends SourceFileGenerator<ContributionBind
         XCodeBlock.of("%L.%N(%L)", module, getMethodReferenceName(method), arguments);
 
     Nullability nullability = Nullability.of(method);
-    return builder
+    builder
         .addAnnotationNames(nullability.nonTypeUseNullableAnnotations())
-        .returns(contributedTypeName(binding))
-        .addStatement("return %L", maybeWrapInCheckForNull(binding, invocation))
-        .build();
+        .returns(contributedTypeName(binding));
+    return buildStaticProxyMethods(
+        binding, typeVariableNames, builder, maybeWrapInCheckForNull(binding, invocation));
+  }
+
+  private ImmutableList<XFunSpec> buildStaticProxyMethods(
+      ContributionBinding binding,
+      ImmutableList<XTypeName> typeVariableNames,
+      XFunSpecs.Builder builder,
+      XCodeBlock returnExpression) {
+    return ImmutableList.of(
+        builder
+            .addModifiers(PUBLIC, STATIC)
+            .addTypeVariableNames(typeVariableNames)
+            .addStatement("return %L", returnExpression)
+            .build());
   }
 
   private XCodeBlock maybeWrapInCheckForNull(ProvisionBinding binding, XCodeBlock codeBlock) {
@@ -524,6 +540,10 @@ public final class FactoryGenerator extends SourceFileGenerator<ContributionBind
         : Optional.of(factoryOf(providedTypeName(binding)));
   }
 
+  private static boolean shouldEraseTypeParameter(XType type, CompilerOptions compilerOptions) {
+    return false;
+  }
+
   /** Represents the available fields in the generated factory class. */
   private static final class FactoryFields {
     static FactoryFields create(ContributionBinding binding, CompilerOptions compilerOptions) {
@@ -533,7 +553,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ContributionBind
           binding.requiresModuleInstance()
               ? Optional.of(
                   createField(
-                      binding.bindingTypeElement().get().getType().asTypeName(),
+                      moduleFieldTypeName(binding, compilerOptions),
                       nameSet.getUniqueName("module")))
               : Optional.empty();
 
@@ -546,6 +566,14 @@ public final class FactoryGenerator extends SourceFileGenerator<ContributionBind
                       dependency, createField(field.type(), nameSet.getUniqueName(field.name()))));
 
       return new FactoryFields(moduleField, frameworkFields.buildOrThrow());
+    }
+
+    private static XTypeName moduleFieldTypeName(
+        ContributionBinding binding, CompilerOptions compilerOptions) {
+      XType moduleType = binding.bindingTypeElement().get().getType();
+      return shouldEraseTypeParameter(moduleType, compilerOptions)
+          ? XTypeName.ANY_OBJECT
+          : moduleType.asTypeName();
     }
 
     private static XPropertySpec createField(XTypeName typeName, String name) {

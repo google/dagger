@@ -29,13 +29,8 @@ import com.squareup.javapoet.ParameterizedTypeName as JParameterizedTypeName
 import com.squareup.javapoet.TypeName as JTypeName
 import com.squareup.javapoet.TypeVariableName as JTypeVariableName
 import com.squareup.javapoet.WildcardTypeName as JWildcardTypeName
-import com.squareup.kotlinpoet.ANY
 import com.squareup.kotlinpoet.ClassName as KClassName
 import com.squareup.kotlinpoet.ParameterizedTypeName as KParameterizedTypeName
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.TypeName as KTypeName
-import com.squareup.kotlinpoet.TypeVariableName as KTypeVariableName
-import com.squareup.kotlinpoet.WildcardTypeName as KWildcardTypeName
 
 /** Common names and convenience methods for XPoet {@link XTypeName} usage. */
 @OptIn(com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview::class)
@@ -412,105 +407,6 @@ object XTypeNames {
           typeParametersMap.put(this, bounds.any { it.boundsHasSelfReference(typeParametersMap) })
         }
         typeParametersMap.get(this)!!
-      }
-      else -> error("Unexpected type name: $this")
-    }
-  }
-
-  @JvmStatic
-  fun XTypeName.replaceTypeVariablesWithBounds() =
-    toXPoet(
-      toJavaPoet().replaceTypeVariablesWithBounds(mutableMapOf()),
-      toKotlinPoet().replaceTypeVariablesWithBounds(mutableMapOf()),
-    )
-
-  private val JCYCLIC_BOUNDS_SENTINEL = JClassName.get("", "JCYCLIC_BOUNDS_SENTINEL")
-
-  private fun JTypeName.replaceTypeVariablesWithBounds(
-    typeParametersMap: MutableMap<JTypeName, JTypeName?>
-  ): JTypeName {
-    if (isPrimitive) {
-      return this
-    }
-    return when (this) {
-      is JClassName -> this
-      is JParameterizedTypeName ->
-        JParameterizedTypeName.get(
-          rawType,
-          *typeArguments.map { it.replaceTypeVariablesWithBounds(typeParametersMap) }.toTypedArray(),
-        )
-      is JWildcardTypeName ->
-        if (!lowerBounds.isEmpty()) {
-          JWildcardTypeName.supertypeOf(
-            lowerBounds.first().replaceTypeVariablesWithBounds(typeParametersMap)
-          )
-        } else {
-          JWildcardTypeName.subtypeOf(
-            upperBounds.first().replaceTypeVariablesWithBounds(typeParametersMap)
-          )
-        }
-      is JArrayTypeName ->
-        JArrayTypeName.of(componentType.replaceTypeVariablesWithBounds(typeParametersMap))
-      is JTypeVariableName -> {
-        if (bounds.isEmpty()) {
-          return JTypeName.OBJECT
-        }
-        if (!typeParametersMap.contains(this)) {
-          // Initialize the map to a sentinel to catch cycles before a real value is assigned.
-          typeParametersMap.put(this, JCYCLIC_BOUNDS_SENTINEL)
-          check(bounds.size == 1) {
-            "Cannot replace type variables with intersection bounds: $this"
-          }
-          val bound = bounds.first().replaceTypeVariablesWithBounds(typeParametersMap)
-          typeParametersMap.put(this, bound)
-        }
-        check(typeParametersMap.get(this) != JCYCLIC_BOUNDS_SENTINEL) {
-          "Cannot replace type variables with cyclic bounds: $this"
-        }
-        return typeParametersMap.get(this)!!
-      }
-      else -> error("Unexpected type name: $this")
-    }
-  }
-
-  private val KCYCLIC_BOUNDS_SENTINEL = KClassName("", "KCYCLIC_BOUNDS_SENTINEL")
-
-  private fun KTypeName.replaceTypeVariablesWithBounds(
-    typeParametersMap: MutableMap<KTypeName, KTypeName>
-  ): KTypeName {
-    return when (this) {
-      is KClassName -> this
-      is KParameterizedTypeName ->
-        rawType.parameterizedBy(
-          *typeArguments.map { it.replaceTypeVariablesWithBounds(typeParametersMap) }.toTypedArray()
-        )
-      is KWildcardTypeName ->
-        if (!inTypes.isEmpty()) {
-          KWildcardTypeName.consumerOf(
-            inTypes.first().replaceTypeVariablesWithBounds(typeParametersMap)
-          )
-        } else {
-          KWildcardTypeName.producerOf(
-            outTypes.first().replaceTypeVariablesWithBounds(typeParametersMap)
-          )
-        }
-      is KTypeVariableName -> {
-        if (bounds.isEmpty()) {
-          return ANY.copy(nullable = true)
-        }
-        if (!typeParametersMap.contains(this)) {
-          // Initialize the map to a sentinel to catch cycles before a real value is assigned.
-          typeParametersMap.put(this, KCYCLIC_BOUNDS_SENTINEL)
-          check(bounds.size == 1) {
-            "Cannot replace type variables with intersection bounds: $this"
-          }
-          val bound = bounds.first().replaceTypeVariablesWithBounds(typeParametersMap)
-          typeParametersMap.put(this, bound)
-        }
-        check(typeParametersMap.get(this) != KCYCLIC_BOUNDS_SENTINEL) {
-          "Cannot replace type variables with cyclic bounds: $this"
-        }
-        return typeParametersMap.get(this)!!
       }
       else -> error("Unexpected type name: $this")
     }

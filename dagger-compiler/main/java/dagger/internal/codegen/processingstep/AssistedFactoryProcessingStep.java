@@ -19,6 +19,7 @@ package dagger.internal.codegen.processingstep;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedFactoryMethods;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedInjectedConstructors;
+import static dagger.internal.codegen.binding.SourceFiles.bindingTypeElementTypeVariableNames;
 import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.xprocessing.Accessibility.accessibleTypeName;
@@ -300,8 +301,13 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
       }
 
       AssistedFactoryMetadata metadata = AssistedFactoryMetadata.create(factory.getType());
+      AssistedInjectionBinding assistedInjectionBinding =
+          bindingFactory.assistedInjectionBinding(
+              getOnlyElement(assistedInjectedConstructors(metadata.assistedInjectElement())),
+              Optional.empty());
       String delegateName = "delegateFactory";
-      XTypeName delegateType = delegateFactoryTypeName(metadata.assistedInjectType());
+      XTypeName delegateType =
+          delegateFactoryTypeName(assistedInjectionBinding, metadata.assistedInjectType());
       builder
           .addProperty(XPropertySpecs.of(delegateName, delegateType, PRIVATE, FINAL))
           .addFunction(
@@ -320,6 +326,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
                   /* returnType= */ javaxProviderOf(accessibleFactoryTypeName(factory)),
                   generatedClassName,
                   metadata,
+                  assistedInjectionBinding,
                   delegateName,
                   delegateType))
           // Normally we would have called this just "create", but because of backwards
@@ -331,6 +338,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
                   /* returnType= */ daggerProviderOf(accessibleFactoryTypeName(factory)),
                   generatedClassName,
                   metadata,
+                  assistedInjectionBinding,
                   delegateName,
                   delegateType));
       return ImmutableList.of(builder.build());
@@ -341,12 +349,13 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
         XTypeName returnType,
         XClassName generatedClassName,
         AssistedFactoryMetadata metadata,
+        AssistedInjectionBinding assistedInjectionBinding,
         String delegateName,
         XTypeName delegateType) {
       return methodBuilder(methodName)
           .addModifiers(PUBLIC, STATIC)
           .addParameter(delegateName, delegateType)
-          .addTypeVariableNames(typeVariableNames(metadata.assistedInjectElement()))
+          .addTypeVariableNames(bindingTypeElementTypeVariableNames(assistedInjectionBinding))
           .returns(returnType)
           .addStatement(
               "return %T.%Lcreate(%L)",
@@ -386,24 +395,21 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
     }
 
     /** Returns the generated factory {@link XTypeName type} for an @AssistedInject constructor. */
-    private XTypeName delegateFactoryTypeName(XType assistedInjectType) {
-      AssistedInjectionBinding binding =
-          bindingFactory.assistedInjectionBinding(
-              getOnlyElement(assistedInjectedConstructors(assistedInjectType.getTypeElement())),
-              Optional.empty());
-
+    private XTypeName delegateFactoryTypeName(
+        AssistedInjectionBinding assistedInjectionBinding, XType assistedInjectType) {
       // The name of the generated factory for the assisted inject type,
       // e.g. an @AssistedInject Foo(...) {...} constructor will generate a Foo_Factory class.
-      XClassName generatedFactoryClassName = generatedClassNameForBinding(binding);
+      XClassName generatedFactoryClassName = generatedClassNameForBinding(assistedInjectionBinding);
 
       // Return the factory type resolved with the same type parameters as the assisted inject type.
-      return assistedInjectType.getTypeArguments().isEmpty()
+      return bindingTypeElementTypeVariableNames(assistedInjectionBinding).isEmpty()
+              || assistedInjectType.getTypeArguments().isEmpty()
           ? generatedFactoryClassName
           : generatedFactoryClassName.parametrizedBy(
-                assistedInjectType.getTypeArguments().stream()
-                    .map(XTypeArgument::asTypeName)
-                    .collect(toImmutableList())
-                    .toArray(new XTypeName[0]));
+              assistedInjectType.getTypeArguments().stream()
+                  .map(XTypeArgument::asTypeName)
+                  .collect(toImmutableList())
+                  .toArray(new XTypeName[0]));
     }
   }
 }

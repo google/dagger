@@ -10,6 +10,7 @@ import javax.`annotation`.processing.Generated
 import kotlin.Any
 import kotlin.CharSequence
 import kotlin.Comparable
+import kotlin.Nothing
 import kotlin.Number
 import kotlin.Suppress
 import kotlin.jvm.JvmStatic
@@ -26,23 +27,25 @@ import kotlin.jvm.JvmStatic
     "USELESS_CAST",
     "DEPRECATION"
 ])
-public class ParentModule_ProvideBEntryFactory<A : CharSequence?, B, C> : Factory<Any?> where C : Number?, C : Comparable<C?>? {
-  private val module: ParentModule<A, B, C>
+public class ParentModule_ProvideBEntryFactory : Factory<Any?> {
+  private val module: Any
 
-  private val bProvider: Provider<B>
+  private val bProvider: Provider<*>
 
-  private constructor(module: ParentModule<A, B, C>, bProvider: Provider<B>) {
+  private constructor(module: Any, bProvider: Provider<*>) {
     this.module = module
     this.bProvider = bProvider
   }
 
-  public override fun `get`(): Any? = provideBEntry<A, B, C>(module, bProvider.get())
+  public override fun `get`(): Any? = provideBEntry(module, bProvider.get())
 
   public companion object {
     @JvmStatic
-    public fun <A : CharSequence?, B, C> create(module: Any?, bProvider: Provider<*>): ParentModule_ProvideBEntryFactory<A, B, C> where C : Number?, C : Comparable<C?>? = ParentModule_ProvideBEntryFactory<A, B, C>((module) as ParentModule<A, B, C>, (bProvider) as Provider<B>)
+    public fun create(module: Any?, bProvider: Provider<*>): ParentModule_ProvideBEntryFactory = ParentModule_ProvideBEntryFactory((module) as Any, (bProvider) as Provider<*>)
 
     @JvmStatic
-    public fun <A : CharSequence?, B, C> provideBEntry(instance: Any?, b: Any?): Any? where C : Number?, C : Comparable<C?>? = Preconditions.checkNotNullFromProvides(((instance) as ParentModule<A, B, C>).provideBEntry((b) as B))
+    public fun provideBEntry(instance: Any?, b: Any?): Any? = provideBEntryInternal<Nothing, Nothing, Nothing>(instance, b)
+
+    private fun <A : CharSequence?, B, C> provideBEntryInternal(instance: Any?, b: Any?): Any? where C : Number?, C : Comparable<C?>? = Preconditions.checkNotNullFromProvides(((instance) as ParentModule<A, B, C>).provideBEntry((b) as B))
   }
 }

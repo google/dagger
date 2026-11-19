@@ -3,7 +3,6 @@ package other;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Preconditions;
 import javax.annotation.processing.Generated;
-import test.Bar;
 import test.ConcreteModule;
 import test.Foo_Factory;
 import test.ParameterizedModule_ProvideListTFactory;
@@ -66,7 +65,7 @@ final class DaggerMyComponent {
     }
 
     Object listOfFoo() {
-      return ParameterizedModule_ProvideListTFactory.<Bar>provideListT(concreteModule, Foo_Factory.newInstance());
+      return ParameterizedModule_ProvideListTFactory.provideListT(concreteModule, Foo_Factory.newInstance());
     }
 
     @Override

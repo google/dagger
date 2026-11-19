@@ -16,8 +16,6 @@
 
 package dagger.internal.codegen.writing;
 
-import static androidx.room3.compiler.codegen.compat.XConverters.toJavaPoet;
-import static androidx.room3.compiler.codegen.compat.XConverters.toKotlinPoet;
 import static androidx.room3.compiler.codegen.compat.XConverters.toXPoet;
 import static androidx.room3.compiler.processing.XElementKt.isMethodParameter;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedParameter;
@@ -29,7 +27,6 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.xprocessing.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.xprocessing.Accessibility.isRawTypePubliclyAccessible;
-import static dagger.internal.codegen.xprocessing.Accessibility.isTypePubliclyAccessible;
 import static dagger.internal.codegen.xprocessing.XCodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.xprocessing.XCodeBlocks.toConcatenatedCodeBlock;
 import static dagger.internal.codegen.xprocessing.XCodeBlocks.toParametersCodeBlock;
@@ -37,8 +34,6 @@ import static dagger.internal.codegen.xprocessing.XElements.asExecutable;
 import static dagger.internal.codegen.xprocessing.XElements.asMethodParameter;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypeNames.asClassName;
-import static dagger.internal.codegen.xprocessing.XTypeNames.replaceTypeVariablesWithBounds;
-import static dagger.internal.codegen.xprocessing.XTypes.asMemberOf;
 import static dagger.internal.codegen.xprocessing.XTypes.erasedTypeName;
 
 import androidx.room3.compiler.codegen.XClassName;
@@ -47,7 +42,6 @@ import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.processing.XExecutableElement;
 import androidx.room3.compiler.processing.XExecutableParameterElement;
 import androidx.room3.compiler.processing.XType;
-import androidx.room3.compiler.processing.XTypeArgument;
 import androidx.room3.compiler.processing.XTypeElement;
 import androidx.room3.compiler.processing.XVariableElement;
 import com.google.common.collect.ImmutableList;
@@ -120,12 +114,7 @@ final class InjectionMethods {
 
       XClassName enclosingClass = generatedClassNameForBinding(binding);
       String methodName = generatedProxyMethodName(binding);
-      return invokeMethod(
-          methodName,
-          methodTypeArguments(binding, compilerOptions),
-          arguments.build(),
-          enclosingClass,
-          requestingClass);
+      return invokeMethod(methodName, arguments.build(), enclosingClass, requestingClass);
     }
 
     static ImmutableList<XCodeBlock> invokeArguments(
@@ -241,8 +230,7 @@ final class InjectionMethods {
       XTypeElement enclosingTypeElement = injectionSite.enclosingTypeElement();
       XClassName enclosingClass = membersInjectorNameForType(enclosingTypeElement);
       String methodName = membersInjectorMethodName(injectionSite);
-      return invokeMethod(
-          methodName, ImmutableList.of(), arguments, enclosingClass, generatedTypeName);
+      return invokeMethod(methodName, arguments, enclosingClass, generatedTypeName);
     }
 
     private static ImmutableSortedSet<InjectionSite> injectionSites(Binding binding) {
@@ -259,69 +247,16 @@ final class InjectionMethods {
     }
   }
 
-  private static ImmutableList<XTypeName> methodTypeArguments(
-      Binding binding, CompilerOptions compilerOptions) {
-    if (!requiresMethodTypeArguments(binding, compilerOptions)) {
-      return ImmutableList.of();
-    }
-    XTypeElement enclosingTypeElement = binding.bindingTypeElement().get();
-    if (enclosingTypeElement.getTypeParameters().isEmpty()) {
-      return ImmutableList.of();
-    }
-    XType unresolvedType = enclosingTypeElement.getType();
-    XType resolvedType =
-        asMemberOf(
-            enclosingTypeElement,
-            binding.contributingModule().isPresent()
-                ? binding.contributingModule().get().getType()
-                : binding.key().type().xprocessing());
-    ImmutableList.Builder<XTypeName> builder = ImmutableList.builder();
-    for (int i = 0; i < resolvedType.getTypeArguments().size(); i++) {
-      XTypeArgument typeArgument = resolvedType.getTypeArguments().get(i);
-      // If the type argument is publicly accessible, we can use it directly. Otherwise, we try to
-      // use the bounds of the type variables. If neither of these are possible, we should have
-      // failed earlier during the binding graph validation stage.
-      if (isTypePubliclyAccessible(typeArgument)) {
-        builder.add(typeArgument.asTypeName());
-      } else {
-        XTypeArgument unresolvedTypeArgument = unresolvedType.getTypeArguments().get(i);
-        builder.add(replaceTypeVariablesWithBounds(unresolvedTypeArgument.asTypeName()));
-      }
-    }
-    return builder.build();
-  }
-
-  private static boolean requiresMethodTypeArguments(
-      Binding binding, CompilerOptions compilerOptions) {
-    return false;
-  }
-
   private static XCodeBlock invokeMethod(
       String methodName,
-      ImmutableList<XTypeName> typeArguments,
       ImmutableList<XCodeBlock> parameters,
       XClassName enclosingClass,
       XClassName requestingClass) {
     XCodeBlock.Builder builder = XCodeBlock.builder();
     if (!enclosingClass.equals(requestingClass)) {
       builder.add("%T.", enclosingClass);
-    } else if (!typeArguments.isEmpty()) {
-      // In Java, if the method requires type arguments we also need to add the enclosing class. For
-      // example, "<Bar>create(bar)" is invalid but "Foo_Factory.<Bar>create(bar)" is valid.
-      toJavaPoet(builder).add("$T.", toJavaPoet(enclosingClass));
     }
-    if (typeArguments.isEmpty()) {
-      builder.add("%N", methodName);
-    } else {
-      XCodeBlock typeParametersCodeBlock =
-          typeArguments.stream()
-              .map(typeParameter -> XCodeBlock.of("%T", typeParameter))
-              .collect(toParametersCodeBlock());
-      toJavaPoet(builder).add("<$L>$N", toJavaPoet(typeParametersCodeBlock), methodName);
-      toKotlinPoet(builder).add("%N<%L>", methodName, toKotlinPoet(typeParametersCodeBlock));
-    }
-    builder.add("(%L)", makeParametersCodeBlock(parameters));
-    return builder.build();
+    return builder.add("%N(%L)", methodName, makeParametersCodeBlock(parameters)).build();
   }
 
   static XCodeBlock copyParameters(

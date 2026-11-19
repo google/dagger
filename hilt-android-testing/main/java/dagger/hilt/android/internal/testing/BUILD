@@ -16,11 +16,10 @@
 #   Internal Hilt android testing libraries
 
 load("@rules_android//rules:rules.bzl", "android_library")
-load("@rules_java//java:defs.bzl", "java_library")
 
 package(default_visibility = ["//:src"])
 
-java_library(
+android_library(
     name = "test_injector",
     testonly = 1,
     srcs = [

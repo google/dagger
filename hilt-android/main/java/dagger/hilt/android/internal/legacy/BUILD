@@ -15,11 +15,11 @@
 # Description:
 #   Internal Hilt libraries for legacy code.
 
-load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_android//rules:rules.bzl", "android_library")
 
 package(default_visibility = ["//:src"])
 
-java_library(
+android_library(
     name = "aggregated_element_proxy",
     srcs = ["AggregatedElementProxy.java"],
 )

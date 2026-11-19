@@ -15,11 +15,11 @@
 # Description:
 #   A processor that aggregates metadata about Hilt @EarlyEntryPoint annotations
 
-load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_android//rules:rules.bzl", "android_library")
 
 package(default_visibility = ["//:src"])
 
-java_library(
+android_library(
     name = "earlyentrypoint",
     srcs = ["AggregatedEarlyEntryPoint.java"],
 )

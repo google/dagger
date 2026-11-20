@@ -149,35 +149,14 @@ jobs:
       - name: 'Set up Cloud SDK'
         uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
       - name: 'Clean up failed staging attempt for this exact version (if any)'
-        run: |
-          set -euo pipefail
-          PKGS=$(gcloud artifacts packages list \
-            --project="oss-exit-gate-prod" \
-            --location="us" \
-            --repository="dagger--mavencentral" \
-            --format="value(name)" 2>/dev/null || true)
-          for pkg in ${PKGS}; do
-            pkg_id="$(basename "${pkg}")"
-            if gcloud artifacts versions describe "${DAGGER_RELEASE_VERSION}" \
-              --package="${pkg_id}" \
-              --project="oss-exit-gate-prod" \
-              --location="us" \
-              --repository="dagger--mavencentral" >/dev/null 2>&1; then
-              echo "Deleting incomplete staged ${pkg_id}@${DAGGER_RELEASE_VERSION} before retry..."
-              gcloud artifacts versions delete "${DAGGER_RELEASE_VERSION}" \
-                --package="${pkg_id}" \
-                --project="oss-exit-gate-prod" \
-                --location="us" \
-                --repository="dagger--mavencentral" \
-                --quiet
-            fi
-          done
+        run: util/cleanup-exit-gate-staging.sh "${DAGGER_RELEASE_VERSION}"
         shell: bash
       - name: 'Publish artifacts to OSS Exit Gate staging'
         run: |
           set -euo pipefail
           export CI_DEPLOY_USERNAME="oauth2accesstoken"
           export CI_DEPLOY_PASSWORD="$(gcloud auth print-access-token)"
+          echo "::add-mask::${CI_DEPLOY_PASSWORD}"
           util/deploy-all.sh \
             "gpg:sign-and-deploy-file" \
             "${DAGGER_RELEASE_VERSION}" \
@@ -192,43 +171,7 @@ jobs:
           RUN_ATTEMPT: ${{ github.run_attempt }}
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import collections, json, os, subprocess
-          ver = os.environ["DAGGER_RELEASE_VERSION"]
-          pkgs_out = subprocess.check_output([
-              "gcloud", "artifacts", "packages", "list",
-              "--project=oss-exit-gate-prod",
-              "--location=us",
-              "--repository=dagger--mavencentral",
-              "--format=value(name)",
-          ], text=True).splitlines()
-          groups = collections.defaultdict(list)
-          for p in sorted(pkgs_out):
-            pkg_id = p.strip().split("/")[-1]
-            if ":" not in pkg_id:
-              continue
-            rc = subprocess.run([
-                "gcloud", "artifacts", "versions", "describe", ver,
-                f"--package={pkg_id}",
-                "--project=oss-exit-gate-prod",
-                "--location=us",
-                "--repository=dagger--mavencentral",
-            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode
-            if rc == 0:
-              ns, name = pkg_id.split(":", 1)
-              groups[ns].append({"name": name, "version": ver})
-          assert groups, f"No staged Maven packages found for version {ver}"
-          manifest = {
-              "publish_all": False,
-              "publishing_groups": [
-                  {"namespace": ns, "packages": pkgs}
-                  for ns, pkgs in sorted(groups.items())
-              ],
-          }
-          with open("manifest.json", "w") as fh:
-            json.dump(manifest, fh, indent=2)
-          print(f"Generated manifest.json with {sum(len(v) for v in groups.values())} staged packages across {list(groups.keys())}")
-          PY
+          python3 util/generate-exit-gate-manifest.py "${DAGGER_RELEASE_VERSION}" manifest.json
           gcloud storage cp manifest.json \
             "gs://oss-exit-gate-prod-projects-bucket/dagger/mavencentral/manifests/manifest-${DAGGER_RELEASE_VERSION}-${RUN_ID}-${RUN_ATTEMPT}.json"
         shell: bash

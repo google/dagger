@@ -1,0 +1,94 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerMyComponent implements MyComponent {
+  private DaggerMyComponent() {
+  }
+
+  @Override
+  public boolean getBoolean() {
+    return false;
+  }
+
+  @Override
+  public byte getByte() {
+    return 0;
+  }
+
+  @Override
+  public short getShort() {
+    return 0;
+  }
+
+  @Override
+  public int getInt() {
+    return 0;
+  }
+
+  @Override
+  public long getLong() {
+    return 0L;
+  }
+
+  @Override
+  public float getFloat() {
+    return 0.0f;
+  }
+
+  @Override
+  public double getDouble() {
+    return 0.0d;
+  }
+
+  @Override
+  public String getString() {
+    return null;
+  }
+
+  @Override
+  public Void getBoxedVoid() {
+    return null;
+  }
+
+  @Override
+  public int[] getIntArray() {
+    return null;
+  }
+
+  @Override
+  public void inject(String str) {
+  }
+
+  public static Builder builder() {
+    return null;
+  }
+
+  public static MyComponent create() {
+    return null;
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public MyComponent build() {
+      return null;
+    }
+  }
+}

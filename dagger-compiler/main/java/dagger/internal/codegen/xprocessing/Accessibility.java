@@ -37,6 +37,7 @@ import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.processing.XConstructorElement;
 import androidx.room3.compiler.processing.XElement;
+import androidx.room3.compiler.processing.XExecutableElement;
 import androidx.room3.compiler.processing.XMemberContainer;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XType;
@@ -170,6 +171,16 @@ public final class Accessibility {
     return packageName.isPresent()
         && container.isFromJava()
         && container.getClassName().packageName().contentEquals(packageName.get());
+  }
+
+  /**
+   * Returns true if the given method or constructor on an accessible supertype can be overridden or
+   * invoked from a subtype in {@code packageName}, or in any package if {@code packageName} is
+   * empty.
+   */
+  public static boolean isExecutableAccessibleFromSubtype(
+      XExecutableElement executable, Optional<String> packageName) {
+    return executable.isProtected() || accessibleModifiers(executable, packageName);
   }
 
   /** Returns true if the raw type of {@code type} is accessible from the given package. */

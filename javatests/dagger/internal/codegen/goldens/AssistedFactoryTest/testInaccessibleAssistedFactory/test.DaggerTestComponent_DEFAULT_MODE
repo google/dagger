@@ -1,0 +1,70 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Provider;
+import javax.annotation.processing.Generated;
+import subpackage.InaccessibleFooFactory;
+import subpackage.InaccessibleFooFactory_Impl;
+import subpackage.InaccessibleFoo_Factory;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new ComponentImpl();
+    }
+  }
+
+  private static final class ComponentImpl implements TestComponent {
+    private final ComponentImpl componentImpl = this;
+
+    @SuppressWarnings("rawtypes")
+    InaccessibleFoo_Factory inaccessibleFooProvider;
+
+    Provider<InaccessibleFooFactory> inaccessibleFooFactoryProvider;
+
+    ComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.inaccessibleFooProvider = InaccessibleFoo_Factory.create();
+      this.inaccessibleFooFactoryProvider = InaccessibleFooFactory_Impl.createFactoryProvider(inaccessibleFooProvider);
+    }
+
+    @Override
+    public InaccessibleFooFactory fooFactory() {
+      return inaccessibleFooFactoryProvider.get();
+    }
+  }
+}

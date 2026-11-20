@@ -114,11 +114,7 @@ public class AssistedFactoryErrorsTest {
   @Test
   public void testFactoryReturnsNonDeclaredType() {
     Source noInject =
-        CompilerTests.javaSource(
-            "test.NoInject",
-            "package test;",
-            "",
-            "final class NoInject {}");
+        CompilerTests.javaSource("test.NoInject", "package test;", "", "final class NoInject {}");
 
     Source noAssistedParam =
         CompilerTests.javaSource(
@@ -154,7 +150,8 @@ public class AssistedFactoryErrorsTest {
         .compile(
             subject -> {
               subject.hasErrorCount(4);
-              subject.hasErrorContaining(
+              subject
+                  .hasErrorContaining(
                       "The @AssistedFactory-annotated type should contain a single abstract, "
                           + "non-default method but found multiple: ["
                           + "test.Factory.createInt(), "
@@ -164,19 +161,22 @@ public class AssistedFactoryErrorsTest {
                           + "]")
                   .onSource(factory)
                   .onLine(6);
-              subject.hasErrorContaining(
+              subject
+                  .hasErrorContaining(
                       "Invalid return type: int. "
                           + "An assisted factory's abstract method must return a type with an "
                           + "@AssistedInject-annotated constructor.")
                   .onSource(factory)
                   .onLine(7);
-              subject.hasErrorContaining(
+              subject
+                  .hasErrorContaining(
                       "Invalid return type: test.NoInject. "
                           + "An assisted factory's abstract method must return a type with an "
                           + "@AssistedInject-annotated constructor.")
                   .onSource(factory)
                   .onLine(9);
-              subject.hasErrorContaining(
+              subject
+                  .hasErrorContaining(
                       "Invalid return type: T. "
                           + "An assisted factory's abstract method must return a type with an "
                           + "@AssistedInject-annotated constructor.")
@@ -228,12 +228,12 @@ public class AssistedFactoryErrorsTest {
             subject -> {
               subject.hasErrorCount(1);
               subject.hasErrorContaining(
-                      "The @AssistedFactory-annotated type should contain a single abstract, "
-                          + "non-default method but found multiple: ["
-                          + "test.FooFactoryInterface.createFoo1(int), "
-                          + "test.FooFactory.createFoo2(int), "
-                          + "test.FooFactory.createFoo3(int)"
-                          + "]");
+                  "The @AssistedFactory-annotated type should contain a single abstract, "
+                      + "non-default method but found multiple: ["
+                      + "test.FooFactoryInterface.createFoo1(int), "
+                      + "test.FooFactory.createFoo2(int), "
+                      + "test.FooFactory.createFoo3(int)"
+                      + "]");
             });
   }
 
@@ -701,13 +701,13 @@ public class AssistedFactoryErrorsTest {
             "  Bar(Foo.Factory fooFactory, Lazy<Foo.Factory> fooFactoryLazy) {}",
             "}");
 
-
     CompilerTests.daggerCompiler(foo, bar)
         .withProcessingOptions(compilerMode.processorOptions())
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              subject.hasErrorContaining(
+              subject
+                  .hasErrorContaining(
                       "Dagger does not support injecting Lazy<T>, Producer<T>, or Produced<T> "
                           + "when T is an @AssistedFactory-annotated type such as test.Foo.Factory")
                   .onSource(bar)
@@ -845,13 +845,13 @@ public class AssistedFactoryErrorsTest {
             "  Foo foo();",
             "}");
 
-
     CompilerTests.daggerCompiler(foo, bar, component)
         .withProcessingOptions(compilerMode.processorOptions())
         .compile(
             subject -> {
               subject.hasErrorCount(2);
-              subject.hasErrorContaining(
+              subject
+                  .hasErrorContaining(
                       "Dagger does not support injecting @AssistedInject type, test.Bar. "
                           + "Did you mean to inject its assisted factory type instead?")
                   .onSource(foo)
@@ -902,22 +902,9 @@ public class AssistedFactoryErrorsTest {
             "  InaccessibleFooFactory inaccessibleFooFactory();",
             "}");
 
-    CompilerTests.DaggerCompiler daggerCompiler =
-        CompilerTests.daggerCompiler(foo, fooFactory, component)
-            .withProcessingOptions(compilerMode.processorOptions());
-
-      if (compilerMode == CompilerMode.FAST_INIT_MODE) {
-      // TODO(bcorso): Remove once we fix inaccessible assisted factory implementation for fastInit.
-      daggerCompiler.compile(
-          subject ->
-              // TODO(bcorso): We don't report the error count here because javac reports
-              // the error once, whereas ksp reports the error twice.
-              subject.hasErrorContaining(
-                  "test.subpackage.InaccessibleFoo is not public in test.subpackage; cannot be "
-                      + "accessed from outside package"));
-    } else {
-      daggerCompiler.compile(subject -> subject.hasErrorCount(0));
-    }
+    CompilerTests.daggerCompiler(foo, fooFactory, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
@@ -945,7 +932,8 @@ public class AssistedFactoryErrorsTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              subject.hasErrorContaining(
+              subject
+                  .hasErrorContaining(
                       "@AssistedFactory does not currently support type parameters in the creator "
                           + "method.")
                   .onSource(foo)
@@ -1000,4 +988,5 @@ public class AssistedFactoryErrorsTest {
         .withProcessingOptions(compilerMode.processorOptions())
         .compile(subject -> subject.hasErrorCount(0));
   }
+
 }

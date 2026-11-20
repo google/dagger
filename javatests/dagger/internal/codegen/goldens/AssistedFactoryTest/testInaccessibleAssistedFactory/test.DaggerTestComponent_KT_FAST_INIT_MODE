@@ -1,0 +1,98 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Provider;
+import dagger.internal.SingleCheck;
+import java.util.List;
+import javax.annotation.processing.Generated;
+import subpackage.InaccessibleFooFactory;
+import subpackage.InaccessibleFooFactory_Proxy;
+import subpackage.InaccessibleFoo_Factory;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new ComponentImpl();
+    }
+  }
+
+  private static final class ComponentImpl implements TestComponent {
+    private final ComponentImpl componentImpl = this;
+
+    /**
+     * {@code Provider<InaccessibleFooFactory>}
+     */
+    Provider<?> inaccessibleFooFactoryProvider;
+
+    ComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.inaccessibleFooFactoryProvider = SingleCheck.provider(new SwitchingProvider<>(componentImpl, 0));
+    }
+
+    @Override
+    public InaccessibleFooFactory fooFactory() {
+      return (InaccessibleFooFactory) ((Object) (inaccessibleFooFactoryProvider.get()));
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final ComponentImpl componentImpl;
+
+      private final int id;
+
+      SwitchingProvider(ComponentImpl componentImpl, int id) {
+        this.componentImpl = componentImpl;
+        this.id = id;
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get() {
+        switch (id) {
+          case 0: // subpackage.InaccessibleFooFactory
+          return (T) InaccessibleFooFactory_Proxy.createFactory(new InaccessibleFooFactory_Proxy() {
+            @Override
+            public Object create(String str, int i, List<String> list) {
+              return InaccessibleFoo_Factory.newInstance(str, i, list);
+            }
+          });
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+}

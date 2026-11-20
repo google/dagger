@@ -1,0 +1,32 @@
+package subpackage;
+
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+
+@FunctionalInterface
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public interface InaccessibleFooFactory_Proxy {
+  Object create(String str);
+
+  static <T extends Comparable<T>> Object createFactory(InaccessibleFooFactory_Proxy proxy) {
+    return new InaccessibleFooFactory<T>() {
+      @Override
+      public InaccessibleFoo<T> create(String str) {
+        return (InaccessibleFoo<T>) proxy.create(str);
+      }
+    };
+  }
+}

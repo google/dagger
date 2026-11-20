@@ -60,6 +60,14 @@ public final class XTypeSpecs {
     return interfaceBuilder(className.getSimpleName());
   }
 
+  public static Builder functionalInterfaceBuilder(String name) {
+    return interfaceBuilder(name).isFunctional(true);
+  }
+
+  public static Builder functionalInterfaceBuilder(XClassName className) {
+    return functionalInterfaceBuilder(className.getSimpleName());
+  }
+
   public static Builder objectBuilder(String name) {
     return new Builder(Builder.Kind.OBJECT).name(name);
   }
@@ -95,6 +103,7 @@ public final class XTypeSpecs {
     private boolean isOpen;
     private boolean isStatic;
     private boolean isAbstract;
+    private boolean isFunctional;
     private VisibilityModifier visibility = null;
     private XElement originatingElement;
     private final Set<String> alwaysQualifyNames = new LinkedHashSet<>();
@@ -137,6 +146,14 @@ public final class XTypeSpecs {
     @CanIgnoreReturnValue
     public Builder isAbstract(boolean isAbstract) {
       this.isAbstract = isAbstract;
+      return this;
+    }
+
+    /** Sets whether the interface is a functional (SAM) interface. */
+    @CanIgnoreReturnValue
+    public Builder isFunctional(boolean isFunctional) {
+      checkState(kind == Kind.INTERFACE, "Only interfaces can be functional: %s", kind);
+      this.isFunctional = isFunctional;
       return this;
     }
 
@@ -373,6 +390,10 @@ public final class XTypeSpecs {
               toXPoet(
                   com.squareup.javapoet.TypeSpec.interfaceBuilder(name),
                   com.squareup.kotlinpoet.TypeSpec.interfaceBuilder(name));
+          if (isFunctional) {
+            toJavaPoet(builder).addAnnotation(FunctionalInterface.class);
+            toKotlinPoet(builder).addModifiers(KModifier.FUN);
+          }
           break;
         case ANNOTATION:
           // TODO(bcorso): Add support for annotations in XPoet.

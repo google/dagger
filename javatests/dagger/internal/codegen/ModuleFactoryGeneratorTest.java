@@ -1006,27 +1006,11 @@ public class ModuleFactoryGeneratorTest {
             "",
             "interface Bar {}");
     daggerCompiler(component, usage, concreteModule, parameterizedModule, foo, packagePrivateBar)
-        .compile(
-            subject -> {
-              if (compilerMode.isKotlinCodegenEnabled()) {
-                // TODO(b/438765237): Currently, this fails at the declaration of the factory
-                // (rather than the call site) because the internal Bar is exposed in the public
-                // factory declaration:  "class ParameterizedModule_ProvideListTFactory<T : Bar>".
-                // See b/438765237 for details on how we can support this case in the future.
-                subject.hasErrorCount(1);
-                subject.hasErrorContaining(
-                    "Bounds for type parameter, T, in class ParameterizedModule<T extends Bar> "
-                        + "must be publicly accessible.");
-              } else {
-                // Note: In this case, when calling the factory the component will use the requested
-                // type, Foo, e.g. "ParameterizedModule_ProvideListTFactory.<Foo>create()" since Foo
-                // is publicly accessible. It doesn't matter that the bound type, Bar, is
-                // package-private.
-                subject.hasErrorCount(0);
-                assertSourceMatchesGolden(subject, "test/ParameterizedModule_ProvideListTFactory");
-                subject.generatedSource(goldenFileRule.goldenSource("other/DaggerMyComponent"));
-              }
-            });
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          assertSourceMatchesGolden(subject, "test/ParameterizedModule_ProvideListTFactory");
+          subject.generatedSource(goldenFileRule.goldenSource("other/DaggerMyComponent"));
+        });
   }
 
   @Test
@@ -1097,10 +1081,6 @@ public class ModuleFactoryGeneratorTest {
     daggerCompiler(component, usage, concreteModule, parameterizedModule, packagePrivateFoo, bar)
         .compile(
             subject -> {
-              // Note: In this case, the requested type is List<Foo>, but when calling the factory
-              // with Kotlin codegen, the component will use the bound type, Bar, e.g.
-              // "ParameterizedModule_ProvideListTFactory.<Bar>create()" since Foo is not publicly
-              // accessible.
               subject.hasErrorCount(0);
               assertSourceMatchesGolden(subject, "test/ParameterizedModule_ProvideListTFactory");
               subject.generatedSource(goldenFileRule.goldenSource("other/DaggerMyComponent"));
@@ -1175,10 +1155,6 @@ public class ModuleFactoryGeneratorTest {
     daggerCompiler(component, usage, concreteModule, parameterizedModule, packagePrivateFoo, bar)
         .compile(
             subject -> {
-              // Note: In this case, the requested type is Map<Foo, Bar<Foo>, but when calling the
-              // factory with Kotlin codegen, the component will use the type,
-              // "ParameterizedModule_ProvideMapFactory.<Object, Bar<Object>>create()" since Foo is
-              // not publicly accessible.
               subject.hasErrorCount(0);
               assertSourceMatchesGolden(subject, "test/ParameterizedModule_ProvideMapFactory");
               subject.generatedSource(goldenFileRule.goldenSource("other/DaggerMyComponent"));
@@ -1250,8 +1226,14 @@ public class ModuleFactoryGeneratorTest {
             "package test;",
             "",
             "interface Bar {}");
-    daggerCompiler(component, usage, concreteModule, parameterizedModule, packagePrivateFoo, packagePrivateBar)
-    .compile(subject -> subject.hasErrorCount(0));
+    daggerCompiler(
+            component,
+            usage,
+            concreteModule,
+            parameterizedModule,
+            packagePrivateFoo,
+            packagePrivateBar)
+        .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
@@ -1327,7 +1309,7 @@ public class ModuleFactoryGeneratorTest {
             "public interface Baz {}");
     daggerCompiler(
             component, usage, concreteModule, parameterizedModule, packagePrivateFoo, bar, baz)
-    .compile(subject -> subject.hasErrorCount(0));
+        .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
@@ -1396,7 +1378,7 @@ public class ModuleFactoryGeneratorTest {
             "",
             "public interface Bar<T> {}");
     daggerCompiler(component, usage, concreteModule, parameterizedModule, packagePrivateFoo, bar)
-    .compile(subject -> subject.hasErrorCount(0));
+        .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test

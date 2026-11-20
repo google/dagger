@@ -330,26 +330,11 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             "interface Bar {}");
     daggerCompiler(component, usage, genericClass, foo, packagePrivateBar)
-        .compile(
-            subject -> {
-              if (compilerMode.isKotlinCodegenEnabled()) {
-                // TODO(b/438765237): Currently, this fails at the declaration of the factory
-                // (rather than the call site) because the internal Bar is exposed in the public
-                // factory declaration:  "class GenericClass_Factory<T : Bar>".
-                // See b/438765237 for details on how we can support this case in the future.
-                subject.hasErrorCount(1);
-                subject.hasErrorContaining(
-                    "Bounds for type parameter, A, in class GenericClass<A extends Bar> must be "
-                        + "publicly accessible.");
-              } else {
-                // Note: In this case, when calling the factory the component will use the requested
-                // type, Foo, e.g. "GenericClass_Factory.<Foo>create()" since Foo is publicly
-                // accessible. It doesn't matter that the bound type, Bar, is package-private.
-                subject.hasErrorCount(0);
-                assertSourceMatchesGolden(subject, "test/GenericClass_Factory");
-                subject.generatedSource(goldenFileRule.goldenSource("other/DaggerMyComponent"));
-              }
-            });
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          assertSourceMatchesGolden(subject, "test/GenericClass_Factory");
+          subject.generatedSource(goldenFileRule.goldenSource("other/DaggerMyComponent"));
+        });
   }
 
   @Test
@@ -405,9 +390,6 @@ public final class InjectConstructorFactoryGeneratorTest {
     daggerCompiler(component, usage, genericClass, packagePrivateFoo, bar)
         .compile(
             subject -> {
-              // Note: In this case, the requested type is GenericClass<Foo>, but when calling the
-              // factory with Kotlin codegen, the component will use the bound type, Bar, e.g.
-              // "GenericClass_Factory.<Bar>create()" since Foo is not publicly accessible.
               subject.hasErrorCount(0);
               assertSourceMatchesGolden(subject, "test/GenericClass_Factory");
               subject.generatedSource(goldenFileRule.goldenSource("other/DaggerMyComponent"));
@@ -480,10 +462,6 @@ public final class InjectConstructorFactoryGeneratorTest {
     daggerCompiler(component, usage, genericClass, packagePrivateFoo, bar, barModule)
         .compile(
             subject -> {
-              // Note: In this case, the requested type is GenericClass<Foo, Bar<Foo>, but when
-              // calling the factory with Kotlin codegen, the component will use the type,
-              // "GenericClass_Factory.<Object, Bar<Object>>create()" since Foo is not publicly
-              // accessible.
               subject.hasErrorCount(0);
               assertSourceMatchesGolden(subject, "test/GenericClass_Factory");
               subject.generatedSource(goldenFileRule.goldenSource("other/DaggerMyComponent"));
@@ -541,7 +519,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             "interface Bar {}");
     daggerCompiler(component, usage, genericClass, packagePrivateFoo, packagePrivateBar)
-    .compile(subject -> subject.hasErrorCount(0));
+        .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
@@ -601,7 +579,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             "public interface Baz {}");
     daggerCompiler(component, usage, genericClass, packagePrivateFoo, bar, baz)
-    .compile(subject -> subject.hasErrorCount(0));
+        .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
@@ -655,7 +633,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             "public interface Bar<T> {}");
     daggerCompiler(component, usage, genericClass, packagePrivateFoo, bar)
-    .compile(subject -> subject.hasErrorCount(0));
+        .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test

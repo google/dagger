@@ -23,11 +23,9 @@ import androidx.room3.compiler.codegen.compat.XConverters.toJavaPoet
 import androidx.room3.compiler.codegen.compat.XConverters.toKotlinPoet
 import androidx.room3.compiler.codegen.compat.XConverters.toXPoet
 import androidx.room3.compiler.processing.XType
-import com.squareup.javapoet.ArrayTypeName as JArrayTypeName
 import com.squareup.javapoet.ClassName as JClassName
 import com.squareup.javapoet.ParameterizedTypeName as JParameterizedTypeName
 import com.squareup.javapoet.TypeName as JTypeName
-import com.squareup.javapoet.TypeVariableName as JTypeVariableName
 import com.squareup.javapoet.WildcardTypeName as JWildcardTypeName
 import com.squareup.kotlinpoet.ClassName as KClassName
 import com.squareup.kotlinpoet.ParameterizedTypeName as KParameterizedTypeName
@@ -374,43 +372,6 @@ object XTypeNames {
   }
 
   @JvmStatic fun XTypeName.isJavaWildcard(): Boolean = toJavaPoet() is JWildcardTypeName
-
-  @JvmStatic
-  fun XTypeName.boundsHasSelfReference(): Boolean =
-    // The result should be the same for both JavaPoet and KotlinPoet, so we only need to check one.
-    toJavaPoet().boundsHasSelfReference(mutableMapOf())
-
-  private fun JTypeName.boundsHasSelfReference(
-    typeParametersMap: MutableMap<JTypeName, Boolean>
-  ): Boolean {
-    if (isPrimitive) {
-      return false
-    }
-    return when (this) {
-      is JClassName -> false
-      is JParameterizedTypeName ->
-        typeArguments.any { it.boundsHasSelfReference(typeParametersMap) }
-      is JWildcardTypeName ->
-        if (!lowerBounds.isEmpty()) {
-          lowerBounds.first().boundsHasSelfReference(typeParametersMap)
-        } else {
-          upperBounds.first().boundsHasSelfReference(typeParametersMap)
-        }
-      is JArrayTypeName -> componentType.boundsHasSelfReference(typeParametersMap)
-      is JTypeVariableName -> {
-        if (bounds.isEmpty()) {
-          return false
-        }
-        if (!typeParametersMap.contains(this)) {
-          // Initialize the map to true so that we can catch cycles before a real value is assigned.
-          typeParametersMap.put(this, true)
-          typeParametersMap.put(this, bounds.any { it.boundsHasSelfReference(typeParametersMap) })
-        }
-        typeParametersMap.get(this)!!
-      }
-      else -> error("Unexpected type name: $this")
-    }
-  }
 
   // TODO(bcorso): Remove this workaround once @JvmStatic is added to XTypeName#getTypeVariableName
   @JvmStatic fun getTypeVariableName(name: String) = XTypeName.getTypeVariableName(name)

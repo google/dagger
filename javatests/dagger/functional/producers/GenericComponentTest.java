@@ -30,6 +30,7 @@ import dagger.producers.ProductionComponent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executor;
+import javax.inject.Named;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -38,11 +39,19 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public final class GenericComponentTest {
   @ProductionComponent(
-      modules = {ExecutorModule.class, NongenericModule.class, ConcreteBoundedModule.class})
+      modules = {
+        ExecutorModule.class,
+        NongenericModule.class,
+        ConcreteBoundedModule.class,
+        ConcretePackagePrivateBoundedModule.class
+      })
   interface GenericComponent {
     ListenableFuture<List<String>> list();
 
     ListenableFuture<List<PublicFoo>> boundedList();
+
+    @Named("packagePrivateBounded")
+    ListenableFuture<List<String>> packagePrivateBoundedList();
   }
 
   public interface PublicBar<T> {
@@ -53,6 +62,27 @@ public final class GenericComponentTest {
     @Override
     public String value() {
       return "bounded";
+    }
+  }
+
+  interface PackagePrivateBar<T extends PackagePrivateBar<T>> {
+    String value();
+  }
+
+  interface PackagePrivateBaz {
+    String otherValue();
+  }
+
+  static final class PackagePrivateFoo
+      implements PackagePrivateBar<PackagePrivateFoo>, PackagePrivateBaz {
+    @Override
+    public String value() {
+      return "inaccessible";
+    }
+
+    @Override
+    public String otherValue() {
+      return "intersection";
     }
   }
 
@@ -100,6 +130,27 @@ public final class GenericComponentTest {
     }
   }
 
+  // Tests a generic base module with package-private intersection bounds (T extends
+  // PackagePrivateBar<T> & PackagePrivateBaz).
+  @ProducerModule
+  static final class ConcretePackagePrivateBoundedModule
+      extends PackagePrivateBoundedGenericModule<PackagePrivateFoo> {
+    @Produces
+    static PackagePrivateFoo packagePrivateFoo() {
+      return new PackagePrivateFoo();
+    }
+  }
+
+  @ProducerModule
+  abstract static class PackagePrivateBoundedGenericModule<
+      T extends PackagePrivateBar<T> & PackagePrivateBaz> {
+    @Produces
+    @Named("packagePrivateBounded")
+    List<String> packagePrivateBoundedList(T t) {
+      return Arrays.asList(t.value() + ":" + t.otherValue());
+    }
+  }
+
   @Test
   public void compileTest() throws Exception {
     GenericComponent component = DaggerGenericComponentTest_GenericComponent.create();
@@ -108,5 +159,8 @@ public final class GenericComponentTest {
     assertThat(component.boundedList().isDone()).isTrue();
     assertThat(Futures.getDone(component.boundedList())).hasSize(1);
     assertThat(Futures.getDone(component.boundedList()).get(0).value()).isEqualTo("bounded");
+    assertThat(component.packagePrivateBoundedList().isDone()).isTrue();
+    assertThat(Futures.getDone(component.packagePrivateBoundedList()))
+        .containsExactly("inaccessible:intersection");
   }
 }

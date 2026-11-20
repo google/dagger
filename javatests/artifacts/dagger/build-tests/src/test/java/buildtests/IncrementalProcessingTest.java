@@ -275,9 +275,7 @@ public class IncrementalProcessingTest {
                 + "'generated.Generated_AnnotatedClassModule' could not be resolved.");
   }
 
-  // This is a regression test for https://github.com/google/dagger/issues/4181 when multiple
-  // @ContributesAndroidInjector modules are implicitly included (see
-  // https://github.com/google/dagger/pull/5360).
+  // This is a regression test for https://github.com/google/dagger/issues/5363.
   @Test
   public void testIncrementalProcessingWithGeneratedAndroidInjectorModules() throws IOException {
     File projectDir = tmpFolder.getRoot();
@@ -369,12 +367,10 @@ public class IncrementalProcessingTest {
     // Leave both injector modules unchanged and regenerate only the component's source file.
     appModule.addSrcFile(
         "MyComponent.kt", componentContent.replace("dependency()", "dependency2()"));
-    BuildResult incrementalBuild = buildAndFail(projectDir);
-    assertThat(incrementalBuild.task(":app:kspKotlin").getOutcome()).isEqualTo(TaskOutcome.FAILED);
-    assertThat(incrementalBuild.getOutput())
-        .contains(
-            "ComponentProcessingStep was unable to process 'app.MyComponent' because "
-                + "'app.ActivityModule_Activity' could not be resolved.");
+    BuildResult incrementalBuild = build(projectDir);
+    assertThat(incrementalBuild.task(":app:kspKotlin").getOutcome()).isEqualTo(TaskOutcome.SUCCESS);
+    assertThat(getAllKspGeneratedFileNames(appModule.getDir()))
+        .containsExactlyElementsIn(initialGeneratedFiles);
   }
 
   private static BuildResult build(File projectDir) {

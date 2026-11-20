@@ -105,7 +105,7 @@ public final class XTypeSpecs {
     private boolean isAbstract;
     private boolean isFunctional;
     private VisibilityModifier visibility = null;
-    private XElement originatingElement;
+    private final List<XElement> originatingElements = new ArrayList<>();
     private final Set<String> alwaysQualifyNames = new LinkedHashSet<>();
     private final List<XCodeBlock> javadocs = new ArrayList<>();
     private XTypeName superclass;
@@ -171,10 +171,10 @@ public final class XTypeSpecs {
       return this;
     }
 
-    /** Sets the originating element of the type. */
+    /** Adds an originating element of the type. */
     @CanIgnoreReturnValue
     public Builder addOriginatingElement(XElement originatingElement) {
-      this.originatingElement = originatingElement;
+      originatingElements.add(originatingElement);
       return this;
     }
 
@@ -420,7 +420,7 @@ public final class XTypeSpecs {
           throw new AssertionError();
       }
 
-      if (originatingElement != null) {
+      for (XElement originatingElement : originatingElements) {
         builder.addOriginatingElement(originatingElement);
       }
 

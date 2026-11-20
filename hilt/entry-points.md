@@ -190,3 +190,60 @@ object FooModule {
 All types returned from an entry point's method **must be public.** This is
 because the generated Dagger component, which is often not in the same package,
 must implement the entry point method.
+
+## Pruning unused entry points
+
+Hilt treats every `@EntryPoint` method as used because Dagger cannot tell at
+compile time whether a method will be called. However, when an entry point
+method is only ever used by a specific set of bindings, [`@OnlyUsedBy`] lets you
+declare those callers so Dagger can prune the method whenever those bindings are
+unused:
+
+<div class="c-codeselector__button c-codeselector__button_java">Java</div>
+<div class="c-codeselector__button c-codeselector__button_kotlin">Kotlin</div>
+```java
+@Singleton
+public final class AuthManager {
+  @EntryPoint
+  @InstallIn(ActivityComponent.class)
+  interface ActivityEntryPoint {
+    @OnlyUsedBy(AuthManager.class)
+    AuthUiHelper authUiHelper();
+  }
+
+  @Inject
+  AuthManager() {}
+
+  public void startAuth(Activity activity) {
+    EntryPoints.get(activity, ActivityEntryPoint.class)
+        .authUiHelper()
+        .launch();
+  }
+}
+```
+{: .c-codeselector__code .c-codeselector__code_java }
+```kotlin
+@Singleton
+class AuthManager @Inject constructor() {
+  @EntryPoint
+  @InstallIn(ActivityComponent::class)
+  internal interface ActivityEntryPoint {
+    @OnlyUsedBy(AuthManager::class)
+    fun authUiHelper(): AuthUiHelper
+  }
+
+  fun startAuth(activity: Activity) {
+    EntryPoints.get(activity, ActivityEntryPoint::class.java)
+        .authUiHelper()
+        .launch()
+  }
+}
+```
+{: .c-codeselector__code .c-codeselector__code_kotlin }
+
+See [Prunable component methods][prunable-component-methods] for more details,
+warnings, and [`@BindingIdentifier`] usage.
+
+[`@BindingIdentifier`]: https://dagger.dev/api/latest/dagger/pruning/BindingIdentifier.html
+[`@OnlyUsedBy`]: https://dagger.dev/api/latest/dagger/pruning/OnlyUsedBy.html
+[prunable-component-methods]: https://dagger.dev/dev-guide/basic-usage.html#prunable-component-methods

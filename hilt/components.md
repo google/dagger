@@ -5,7 +5,7 @@ title: Hilt Components
 
 **Note:** The following page assumes a basic knowledge of Dagger, including
 components, modules, scopes, and bindings. (For a refresher, see
-[Dagger users guide](https://dagger.dev/dev-guide).)
+[Dagger users guide](https://dagger.dev/dev-guide/index.html).)
 {: .c-callouts__note }
 
 ## Component hierarchy {#component-hierarchy}
@@ -25,8 +25,6 @@ binding must match the [scope of the component](#component-lifetimes). For
 example, a binding within an `@InstallIn(ActivityComponent.class)` module can
 only be scoped with `@ActivityScoped`.
 {: .c-callouts__note }
-
-[Dagger docs]:https://dagger.dev/subcomponents#subcomponents-and-scope
 
 ![Hilt Component Hierarchy](component-hierarchy.svg)
 

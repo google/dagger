@@ -38,7 +38,7 @@ public class ParameterizedModule_ProvideMapFactory : Factory<Any?> {
 
   public companion object {
     @JvmStatic
-    public fun create(module: Any?, t1Provider: Provider<*>): ParameterizedModule_ProvideMapFactory = ParameterizedModule_ProvideMapFactory((module) as Any, (t1Provider) as Provider<*>)
+    public fun create(module: Any?, t1Provider: Provider<*>): ParameterizedModule_ProvideMapFactory = ParameterizedModule_ProvideMapFactory((module) as Any, t1Provider)
 
     @JvmStatic
     public fun provideMap(instance: Any?, t1: Any?): Any? = provideMapInternal<Nothing, Nothing>(instance, t1)

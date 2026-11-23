@@ -68,7 +68,7 @@ public class MixedMemberInjection_MembersInjector : MembersInjector<Any> {
     @InjectedFieldSignature(value = "test.MixedMemberInjection.object")
     @JvmStatic
     public fun injectObject(instance: Any?, `object`: Any?) {
-      ((instance) as MixedMemberInjection).`object` = (`object`) as Any?
+      ((instance) as MixedMemberInjection).`object` = `object`
     }
 
     @JvmStatic
@@ -78,7 +78,7 @@ public class MixedMemberInjection_MembersInjector : MembersInjector<Any> {
 
     @JvmStatic
     public fun injectSetObject(instance: Any?, o: Any?) {
-      ((instance) as MixedMemberInjection).setObject((o) as Any?)
+      ((instance) as MixedMemberInjection).setObject(o)
     }
   }
 }

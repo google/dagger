@@ -80,7 +80,7 @@ public class SuperType_MembersInjector : MembersInjector<Any> {
       listTProvider2: Provider<*>,
       listExtendsTProvider2: Provider<*>,
       arrayListExtendsTProvider2: Provider<*>,
-    ): MembersInjector<Any> = SuperType_MembersInjector((tProvider) as Provider<*>, (listTProvider) as Provider<*>, (listExtendsTProvider) as Provider<*>, (arrayListExtendsTProvider) as Provider<*>, (tProvider2) as Provider<*>, (listTProvider2) as Provider<*>, (listExtendsTProvider2) as Provider<*>, (arrayListExtendsTProvider2) as Provider<*>)
+    ): MembersInjector<Any> = SuperType_MembersInjector(tProvider, listTProvider, listExtendsTProvider, arrayListExtendsTProvider, tProvider2, listTProvider2, listExtendsTProvider2, arrayListExtendsTProvider2)
 
     @InjectedFieldSignature(value = "other.SuperType.t")
     @JvmStatic

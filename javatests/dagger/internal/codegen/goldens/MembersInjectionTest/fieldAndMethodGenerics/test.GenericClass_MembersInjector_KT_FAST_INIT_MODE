@@ -39,7 +39,7 @@ public class GenericClass_MembersInjector : MembersInjector<Any> {
 
   public companion object {
     @JvmStatic
-    public fun create(aProvider: Provider<*>, bProvider: Provider<*>): MembersInjector<Any> = GenericClass_MembersInjector((aProvider) as Provider<*>, (bProvider) as Provider<*>)
+    public fun create(aProvider: Provider<*>, bProvider: Provider<*>): MembersInjector<Any> = GenericClass_MembersInjector(aProvider, bProvider)
 
     @InjectedFieldSignature(value = "test.GenericClass.a")
     @JvmStatic

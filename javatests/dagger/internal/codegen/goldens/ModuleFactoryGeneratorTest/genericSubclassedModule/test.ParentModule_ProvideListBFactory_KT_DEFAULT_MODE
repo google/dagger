@@ -41,7 +41,7 @@ public class ParentModule_ProvideListBFactory : Factory<Any?> {
 
   public companion object {
     @JvmStatic
-    public fun create(module: Any?, bProvider: Provider<*>): ParentModule_ProvideListBFactory = ParentModule_ProvideListBFactory((module) as Any, (bProvider) as Provider<*>)
+    public fun create(module: Any?, bProvider: Provider<*>): ParentModule_ProvideListBFactory = ParentModule_ProvideListBFactory((module) as Any, bProvider)
 
     @JvmStatic
     public fun provideListB(instance: Any?, b: Any?): Any? = provideListBInternal<Nothing, Nothing, Nothing>(instance, b)

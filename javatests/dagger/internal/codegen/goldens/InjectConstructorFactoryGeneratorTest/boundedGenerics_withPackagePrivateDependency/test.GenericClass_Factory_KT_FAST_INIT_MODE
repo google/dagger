@@ -37,7 +37,7 @@ public class GenericClass_Factory : Factory<Any?> {
 
   public companion object {
     @JvmStatic
-    public fun create(aProvider: Provider<*>, barProvider: Provider<*>): GenericClass_Factory = GenericClass_Factory((aProvider) as Provider<*>, (barProvider) as Provider<Bar?>)
+    public fun create(aProvider: Provider<*>, barProvider: Provider<*>): GenericClass_Factory = GenericClass_Factory(aProvider, (barProvider) as Provider<Bar?>)
 
     @JvmStatic
     public fun newInstance(a: Any?, bar: Any?): Any? = newInstanceInternal<Nothing>(a, bar)

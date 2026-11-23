@@ -63,7 +63,7 @@ public class Child_MembersInjector : MembersInjector<Any> {
       a2Provider: Provider<*>,
       aProvider: Provider<*>,
       tProvider: Provider<*>,
-    ): MembersInjector<Any> = Child_MembersInjector((xProvider) as Provider<*>, (yProvider) as Provider<A?>, (a2Provider) as Provider<A2?>, (aProvider) as Provider<A?>, (tProvider) as Provider<*>)
+    ): MembersInjector<Any> = Child_MembersInjector(xProvider, (yProvider) as Provider<A?>, (a2Provider) as Provider<A2?>, (aProvider) as Provider<A?>, tProvider)
 
     @InjectedFieldSignature(value = "test.Child.a")
     @JvmStatic

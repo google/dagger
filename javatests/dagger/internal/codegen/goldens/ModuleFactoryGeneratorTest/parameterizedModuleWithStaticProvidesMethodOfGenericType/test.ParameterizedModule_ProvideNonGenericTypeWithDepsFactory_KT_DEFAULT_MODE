@@ -37,6 +37,6 @@ public class ParameterizedModule_ProvideNonGenericTypeWithDepsFactory : Factory<
     public fun create(oProvider: Provider<*>): ParameterizedModule_ProvideNonGenericTypeWithDepsFactory = ParameterizedModule_ProvideNonGenericTypeWithDepsFactory((oProvider) as Provider<Any?>)
 
     @JvmStatic
-    public fun provideNonGenericTypeWithDeps(o: Any?): Any? = Preconditions.checkNotNullFromProvides(ParameterizedModule.provideNonGenericTypeWithDeps((o) as Any?))
+    public fun provideNonGenericTypeWithDeps(o: Any?): Any? = Preconditions.checkNotNullFromProvides(ParameterizedModule.provideNonGenericTypeWithDeps(o))
   }
 }

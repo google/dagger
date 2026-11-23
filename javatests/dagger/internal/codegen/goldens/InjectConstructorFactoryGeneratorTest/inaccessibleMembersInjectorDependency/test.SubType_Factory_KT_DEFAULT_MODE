@@ -38,7 +38,7 @@ public class SubType_Factory : Factory<Any?> {
 
   public companion object {
     @JvmStatic
-    public fun create(inaccessibleTypeProvider: Provider<*>): SubType_Factory = SubType_Factory((inaccessibleTypeProvider) as Provider<*>)
+    public fun create(inaccessibleTypeProvider: Provider<*>): SubType_Factory = SubType_Factory(inaccessibleTypeProvider)
 
     @JvmStatic
     public fun newInstance(): Any? = SubType()

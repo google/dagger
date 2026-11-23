@@ -288,8 +288,8 @@ final class InjectionMethods {
    * Adds the parameter to the given {@code methodBuilder} and returns a code block that can be used
    * to call the parameter.
    *
-   * <p>If the given {@code typeName} is not accessible, the {@link Object} type is used as the
-   * parameter type instead, and the code block will contain a cast to the {@code typeName}.
+   * <p>If {@code isTypeNameAccessible} is false, {@link Object} is used as the parameter type and
+   * the returned code block will contain a cast to {@code typeName}.
    */
   static XCodeBlock copyParameter(
       XFunSpecs.Builder methodBuilder,
@@ -298,14 +298,34 @@ final class InjectionMethods {
       Nullability nullability,
       boolean isTypeNameAccessible,
       CompilerOptions compilerOptions) {
-    return copyParameterInternal(
+    return copyParameter(
         methodBuilder,
         name,
         typeName,
-        isTypeNameAccessible,
-        XTypeName.ANY_OBJECT.copy(/* nullable= */ true),
+        isTypeNameAccessible ? typeName : XTypeName.ANY_OBJECT.copy(/* nullable= */ true),
         nullability,
         compilerOptions);
+  }
+
+  /**
+   * Adds the parameter to the given {@code methodBuilder} and returns a code block that can be used
+   * to call the parameter.
+   *
+   * <p>If {@code typeName} differs from {@code publicTypeName}, {@code publicTypeName} is used as
+   * the parameter type and the returned code block will contain a cast to {@code typeName}.
+   */
+  static XCodeBlock copyParameter(
+      XFunSpecs.Builder methodBuilder,
+      String name,
+      XTypeName typeName,
+      XTypeName publicTypeName,
+      Nullability nullability,
+      CompilerOptions compilerOptions) {
+    methodBuilder.addParameter(
+        XParameterSpecs.of(name, publicTypeName, nullability, compilerOptions));
+    return typeName.equals(publicTypeName)
+        ? XCodeBlock.of("%N", name)
+        : XCodeBlock.ofCast(typeName, XCodeBlock.of("%N", name));
   }
 
   /**
@@ -323,32 +343,12 @@ final class InjectionMethods {
       Nullability nullability,
       boolean isTypeNameAccessible,
       CompilerOptions compilerOptions) {
-    return copyParameterInternal(
-        methodBuilder,
-        name,
-        typeName,
-        isTypeNameAccessible,
-        asClassName(typeName.getRawTypeName()).parametrizedBy(XTypeName.ANY_WILDCARD),
-        nullability,
-        compilerOptions);
-  }
-
-  private static XCodeBlock copyParameterInternal(
-      XFunSpecs.Builder methodBuilder,
-      String name,
-      XTypeName typeName,
-      boolean isTypeNameAccessible,
-      XTypeName accessibleTypeName,
-      Nullability nullability,
-      CompilerOptions compilerOptions) {
-    methodBuilder.addParameter(
-        XParameterSpecs.of(
-            name,
-            isTypeNameAccessible ? typeName : accessibleTypeName,
-            nullability,
-            compilerOptions));
-    return isTypeNameAccessible
-        ? XCodeBlock.of("%N", name)
-        : XCodeBlock.ofCast(typeName, XCodeBlock.of("%N", name));
+    boolean useRawFrameworkType = !isTypeNameAccessible;
+    XTypeName publicTypeName =
+        useRawFrameworkType
+            ? asClassName(typeName.getRawTypeName()).parametrizedBy(XTypeName.ANY_WILDCARD)
+            : typeName;
+    return copyParameter(
+        methodBuilder, name, typeName, publicTypeName, nullability, compilerOptions);
   }
 }

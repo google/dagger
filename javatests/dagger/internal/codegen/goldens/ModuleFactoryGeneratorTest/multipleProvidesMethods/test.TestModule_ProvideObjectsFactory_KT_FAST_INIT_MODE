@@ -65,6 +65,6 @@ public class TestModule_ProvideObjectsFactory : Factory<Any?> {
       a: Any?,
       b: Any?,
       xInjector: Any?,
-    ): Any? = Preconditions.checkNotNullFromProvides(((instance) as TestModule).provideObjects((a) as Any?, (b) as Any?, (xInjector) as MembersInjector<X?>?))
+    ): Any? = Preconditions.checkNotNullFromProvides(((instance) as TestModule).provideObjects(a, b, (xInjector) as MembersInjector<X?>?))
   }
 }

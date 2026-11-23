@@ -38,7 +38,7 @@ public class ParameterizedModule_ProvideListTFactory : Factory<Any?> {
 
   public companion object {
     @JvmStatic
-    public fun create(module: Any?, tProvider: Provider<*>): ParameterizedModule_ProvideListTFactory = ParameterizedModule_ProvideListTFactory((module) as Any, (tProvider) as Provider<*>)
+    public fun create(module: Any?, tProvider: Provider<*>): ParameterizedModule_ProvideListTFactory = ParameterizedModule_ProvideListTFactory((module) as Any, tProvider)
 
     @JvmStatic
     public fun provideListT(instance: Any?, t: Any?): Any? = provideListTInternal<Nothing>(instance, t)

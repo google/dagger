@@ -50,7 +50,7 @@ public class MyClass_MembersInjector : MembersInjector<Any> {
     @InjectedFieldSignature(value = "test.MyClass.nullableObject")
     @JvmStatic
     public fun injectNullableObject(instance: Any?, nullableObject: Any?) {
-      ((instance) as MyClass).nullableObject = (nullableObject) as Any?
+      ((instance) as MyClass).nullableObject = nullableObject
     }
   }
 }

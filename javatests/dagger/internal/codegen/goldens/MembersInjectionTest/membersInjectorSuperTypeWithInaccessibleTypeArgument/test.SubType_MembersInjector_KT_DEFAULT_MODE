@@ -85,7 +85,7 @@ public class SubType_MembersInjector : MembersInjector<Any> {
       listExtendsTProvider2: Provider<*>,
       arrayListExtendsTProvider2: Provider<*>,
       iProvider: Provider<*>,
-    ): MembersInjector<Any> = SubType_MembersInjector((tProvider) as Provider<*>, (listTProvider) as Provider<*>, (listExtendsTProvider) as Provider<*>, (arrayListExtendsTProvider) as Provider<*>, (tProvider2) as Provider<*>, (listTProvider2) as Provider<*>, (listExtendsTProvider2) as Provider<*>, (arrayListExtendsTProvider2) as Provider<*>, (iProvider) as Provider<Int?>)
+    ): MembersInjector<Any> = SubType_MembersInjector(tProvider, listTProvider, listExtendsTProvider, arrayListExtendsTProvider, tProvider2, listTProvider2, listExtendsTProvider2, arrayListExtendsTProvider2, (iProvider) as Provider<Int?>)
 
     @InjectedFieldSignature(value = "test.SubType.i")
     @JvmStatic

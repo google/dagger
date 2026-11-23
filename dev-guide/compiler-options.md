@@ -97,7 +97,8 @@ Dagger [`@Component`]: `-Adagger.fastInit=enabled`.
 
 **Note:** If you are using Hilt, fastInit mode is enabled by default but can be
 configured differently. See
-[Hilt Fast Init](https://dagger.dev/hilt/flags#fast-init) for more details.
+[Hilt Fast Init](https://dagger.dev/hilt/flags.html#fast-init)
+for more details.
 
 ## Turning on code formatting
 

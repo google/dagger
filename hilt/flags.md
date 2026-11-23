@@ -141,5 +141,5 @@ This flag used to be paired with a compiler option flag
 compiler option has now been removed and this behavior is only controlled via
 the runtime flag.
 
-[fast-init-link]: https://dagger.dev/compiler-options.html#fastinit-mode
-[compiler-options-link]: https://dagger.dev/compiler-options.html#fastinit-mode
+[fast-init-link]: https://dagger.dev/dev-guide/compiler-options.html#fast-init
+[compiler-options-link]: https://dagger.dev/dev-guide/compiler-options.html#fast-init

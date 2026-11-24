@@ -50,6 +50,7 @@ import dagger.internal.codegen.binding.ComponentCreatorDescriptor;
 import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.xprocessing.HjarGenerator;
 import dagger.internal.codegen.xprocessing.MethodSignature;
 import dagger.internal.codegen.xprocessing.XFunSpecs;
 import dagger.internal.codegen.xprocessing.XTypeNames;
@@ -69,7 +70,8 @@ import javax.inject.Inject;
  * compilation succeeded.
  *
  * <p>The components emitted by this processing step include all of the API elements exposed by the
- * normal step. Method bodies are omitted as Turbine ignores them entirely.
+ * normal step, with placeholder constructor {@code super(...)} calls and default return values so
+ * the generated code compiles under both Turbine and Javac.
  */
 final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescriptor> {
   private final CompilerOptions compilerOptions;
@@ -89,15 +91,15 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
   @Override
   public ImmutableList<XTypeSpec> topLevelTypes(ComponentDescriptor componentDescriptor) {
     XClassName generatedTypeName = getTopLevelClassName(componentDescriptor);
+    XTypeElement componentElement = componentDescriptor.typeElement();
     XTypeSpecs.Builder generatedComponent =
         XTypeSpecs.classBuilder(generatedTypeName)
             .addModifiers(FINAL)
-            .addFunction(privateConstructor());
-    if (componentDescriptor.typeElement().isPublic()) {
+            .addFunction(privateComponentConstructor(componentElement));
+    if (componentElement.isPublic()) {
       generatedComponent.addModifiers(PUBLIC);
     }
 
-    XTypeElement componentElement = componentDescriptor.typeElement();
     if (compilerOptions.generatedClassExtendsComponent()) {
       generatedComponent.superType(componentElement);
     }
@@ -115,7 +117,7 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
           XTypeSpecs.classBuilder("Builder")
               .addModifiers(STATIC, FINAL)
               .addFunction(privateConstructor());
-      if (componentDescriptor.typeElement().isPublic()) {
+      if (componentElement.isPublic()) {
         builder.addModifiers(PUBLIC);
       }
 
@@ -152,7 +154,7 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
           .forEach(
               method ->
                   generatedComponent.addFunction(
-                      emptyComponentMethod(componentElement, method.methodElement())));
+                      componentMethodStub(componentElement, method.methodElement())));
 
       if (componentDescriptor.isProduction()) {
         generatedComponent
@@ -164,8 +166,22 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
     return ImmutableList.of(generatedComponent.build());
   }
 
-  private XFunSpec emptyComponentMethod(XTypeElement typeElement, XMethodElement baseMethod) {
-    return XFunSpecs.overriding(baseMethod, typeElement.getType(), compilerOptions).build();
+  private XFunSpec componentMethodStub(XTypeElement typeElement, XMethodElement baseMethod) {
+    XFunSpecs.Builder builder =
+        XFunSpecs.overriding(baseMethod, typeElement.getType(), compilerOptions);
+    HjarGenerator.getDefaultValueCodeBlock(builder.getReturnType())
+        .ifPresent(value -> builder.addStatement("return %L", value));
+    return builder.build();
+  }
+
+  private XFunSpec privateComponentConstructor(XTypeElement componentElement) {
+    XFunSpecs.Builder constructor = constructorBuilder().addModifiers(PRIVATE);
+    if (compilerOptions.generatedClassExtendsComponent() && componentElement.isClass()) {
+      HjarGenerator.getRequiredSuperConstructorArgs(
+              componentElement.getPackageName(), componentElement)
+          .ifPresent(constructor::callSuperConstructor);
+    }
+    return constructor.build();
   }
 
   private static XFunSpec privateConstructor() {
@@ -220,6 +236,7 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
         .addModifiers(PUBLIC)
         .addParameter(simpleName, componentRequirement.asClassName())
         .returns(builderClass)
+        .addStatement("return null")
         .build();
   }
 
@@ -227,6 +244,7 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
     return XFunSpecs.methodBuilder("build")
         .addModifiers(PUBLIC)
         .returns(component.typeElement().asClassName())
+        .addStatement("return null")
         .build();
   }
 
@@ -235,6 +253,7 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
     return XFunSpecs.methodBuilder(Ascii.toLowerCase(creatorKind.typeName()))
         .addModifiers(PUBLIC, STATIC)
         .returns(creatorMethodReturnType)
+        .addStatement("return null")
         .build();
   }
 
@@ -242,6 +261,7 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
     return XFunSpecs.methodBuilder("create")
         .addModifiers(PUBLIC, STATIC)
         .returns(componentDescriptor.typeElement().asClassName())
+        .addStatement("return null")
         .build();
   }
 

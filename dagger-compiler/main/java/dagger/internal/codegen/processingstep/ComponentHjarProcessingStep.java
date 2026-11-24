@@ -43,7 +43,8 @@ import javax.inject.Inject;
  * compilation succeeded.
  *
  * <p>The components emitted by this processing step include all of the API elements exposed by the
- * normal step. Method bodies are omitted as Turbine ignores them entirely.
+ * normal step, with placeholder constructor and method bodies so the generated code compiles under
+ * both Turbine and Javac.
  */
 final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<XTypeElement> {
   private final ComponentValidator componentValidator;

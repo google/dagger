@@ -63,6 +63,80 @@ public final class HjarGenerator {
     return skeletonType(packageName, toJavaPoet(completeType), processingEnv);
   }
 
+  /**
+   * Returns a comma-separated {@link XCodeBlock} of Java default-value arguments to pass to an
+   * accessible constructor of {@code superTypeElement} from {@code packageName}, or empty if no
+   * explicit {@code super(...)} call is required (for example, when there is an accessible
+   * zero-argument constructor).
+   */
+  public static Optional<XCodeBlock> getRequiredSuperConstructorArgs(
+      String packageName, XTypeElement superTypeElement) {
+    ImmutableSet<XConstructorElement> accessibleConstructors =
+        superTypeElement.getConstructors().stream()
+            .filter(
+                constructor ->
+                    // isElementAccessibleFrom doesn't take protected into account so check manually
+                    constructor.isProtected() || isElementAccessibleFrom(constructor, packageName))
+            .collect(toImmutableSet());
+
+    // If there's an accessible default constructor we don't need to call super() manually.
+    if (accessibleConstructors.isEmpty()
+        || accessibleConstructors.stream()
+            .anyMatch(constructor -> constructor.getParameters().isEmpty())) {
+      return Optional.empty();
+    }
+
+    return Optional.of(
+        makeParametersCodeBlock(
+            // We just choose the first constructor (it doesn't really matter since we're
+            // just trying to ensure the constructor body compiles).
+            accessibleConstructors.stream().findFirst().get().getParameters().stream()
+                .map(XExecutableParameterElement::getType)
+                .map(XType::asTypeName)
+                .map(HjarGenerator::getDefaultValueCodeBlock)
+                .map(Optional::get)
+                .collect(toImmutableList())));
+  }
+
+  /**
+   * Returns an {@link XCodeBlock} containing the Java default value for the given {@code typeName},
+   * or empty if {@code typeName} is {@link XTypeName#UNIT_VOID}.
+   *
+   * <p>See https://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html.
+   */
+  public static Optional<XCodeBlock> getDefaultValueCodeBlock(XTypeName typeName) {
+    return getDefaultValueCodeBlock(toJavaPoet(typeName));
+  }
+
+  private static Optional<XCodeBlock> getDefaultValueCodeBlock(TypeName typeName) {
+    TypeName unannotatedType = typeName.withoutAnnotations();
+    if (unannotatedType.equals(toJavaPoet(XTypeName.UNIT_VOID))) {
+      return Optional.empty();
+    }
+    if (unannotatedType.isPrimitive()) {
+      if (unannotatedType.equals(toJavaPoet(XTypeName.PRIMITIVE_BOOLEAN))) {
+        return Optional.of(XCodeBlock.of("false"));
+      } else if (unannotatedType.equals(toJavaPoet(XTypeName.PRIMITIVE_CHAR))) {
+        return Optional.of(XCodeBlock.of("'\u0000'"));
+      } else if (unannotatedType.equals(toJavaPoet(XTypeName.PRIMITIVE_BYTE))) {
+        return Optional.of(XCodeBlock.of("0"));
+      } else if (unannotatedType.equals(toJavaPoet(XTypeName.PRIMITIVE_SHORT))) {
+        return Optional.of(XCodeBlock.of("0"));
+      } else if (unannotatedType.equals(toJavaPoet(XTypeName.PRIMITIVE_INT))) {
+        return Optional.of(XCodeBlock.of("0"));
+      } else if (unannotatedType.equals(toJavaPoet(XTypeName.PRIMITIVE_LONG))) {
+        return Optional.of(XCodeBlock.of("0L"));
+      } else if (unannotatedType.equals(toJavaPoet(XTypeName.PRIMITIVE_FLOAT))) {
+        return Optional.of(XCodeBlock.of("0.0f"));
+      } else if (unannotatedType.equals(toJavaPoet(XTypeName.PRIMITIVE_DOUBLE))) {
+        return Optional.of(XCodeBlock.of("0.0d"));
+      } else {
+        throw new AssertionError("Unexpected type: " + typeName);
+      }
+    }
+    return Optional.of(XCodeBlock.of("null"));
+  }
+
   private static XTypeSpec skeletonType(
       String packageName, TypeSpec completeType, XProcessingEnv processingEnv) {
     boolean isOpen = !completeType.modifiers.contains(Modifier.FINAL);
@@ -113,10 +187,9 @@ public final class HjarGenerator {
     if (completeMethod.isConstructor()) {
       getRequiredSuperCall(packageName, completeType, processingEnv)
           .ifPresent(superCall -> skeleton.addStatement("$L", superCall));
-    } else if (!completeMethod.modifiers.contains(Modifier.ABSTRACT)
-        && !completeMethod.returnType.equals(toJavaPoet(XTypeName.UNIT_VOID))) {
-      skeleton.addStatement(
-          "return $L", toJavaPoet(getDefaultValueCodeBlock(completeMethod.returnType)));
+    } else if (!completeMethod.modifiers.contains(Modifier.ABSTRACT)) {
+      getDefaultValueCodeBlock(completeMethod.returnType)
+          .ifPresent(value -> skeleton.addStatement("return $L", toJavaPoet(value)));
     }
 
     return skeleton
@@ -137,65 +210,8 @@ public final class HjarGenerator {
 
     ClassName rawSuperClass = (ClassName) XTypeNames.rawJavaTypeName(completeType.superclass);
     XTypeElement superTypeElement = processingEnv.requireTypeElement(rawSuperClass.canonicalName());
-
-    ImmutableSet<XConstructorElement> accessibleConstructors =
-        superTypeElement.getConstructors().stream()
-            .filter(
-                constructor ->
-                    // isElementAccessibleFrom doesn't take protected into account so check manually
-                    constructor.isProtected() || isElementAccessibleFrom(constructor, packageName))
-            .collect(toImmutableSet());
-
-    // If there's an accessible default constructor we don't need to call super() manually.
-    if (accessibleConstructors.isEmpty()
-        || accessibleConstructors.stream()
-            .anyMatch(constructor -> constructor.getParameters().isEmpty())) {
-      return Optional.empty();
-    }
-
-    return Optional.of(
-        CodeBlock.of(
-            "super($L)",
-            toJavaPoet(
-                makeParametersCodeBlock(
-                    // We just choose the first constructor (it doesn't really matter since we're
-                    // just trying to ensure the constructor body compiles).
-                    accessibleConstructors.stream().findFirst().get().getParameters().stream()
-                        .map(XExecutableParameterElement::getType)
-                        .map(XType::getTypeName)
-                        .map(HjarGenerator::getDefaultValueCodeBlock)
-                        .collect(toImmutableList())))));
-  }
-
-  /**
-   * Returns a {@link CodeBlock} containing the default value for the given {@code typeName}.
-   *
-   * <p>See https://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html.
-   */
-  private static XCodeBlock getDefaultValueCodeBlock(TypeName typeName) {
-    TypeName unannotatedType = typeName.withoutAnnotations();
-    if (unannotatedType.isPrimitive()) {
-      if (unannotatedType.equals(toJavaPoet(XTypeName.PRIMITIVE_BOOLEAN))) {
-        return XCodeBlock.of("false");
-      } else if (unannotatedType.equals(toJavaPoet(XTypeName.PRIMITIVE_CHAR))) {
-        return XCodeBlock.of("'\u0000'");
-      } else if (unannotatedType.equals(toJavaPoet(XTypeName.PRIMITIVE_BYTE))) {
-        return XCodeBlock.of("0");
-      } else if (unannotatedType.equals(toJavaPoet(XTypeName.PRIMITIVE_SHORT))) {
-        return XCodeBlock.of("0");
-      } else if (unannotatedType.equals(toJavaPoet(XTypeName.PRIMITIVE_INT))) {
-        return XCodeBlock.of("0");
-      } else if (unannotatedType.equals(toJavaPoet(XTypeName.PRIMITIVE_LONG))) {
-        return XCodeBlock.of("0L");
-      } else if (unannotatedType.equals(toJavaPoet(XTypeName.PRIMITIVE_FLOAT))) {
-        return XCodeBlock.of("0.0f");
-      } else if (unannotatedType.equals(toJavaPoet(XTypeName.PRIMITIVE_DOUBLE))) {
-        return XCodeBlock.of("0.0d");
-      } else {
-        throw new AssertionError("Unexpected type: " + typeName);
-      }
-    }
-    return XCodeBlock.of("null");
+    return getRequiredSuperConstructorArgs(packageName, superTypeElement)
+        .map(args -> CodeBlock.of("super($L)", toJavaPoet(args)));
   }
 
   private static FieldSpec skeletonField(FieldSpec completeField) {
@@ -207,7 +223,7 @@ public final class HjarGenerator {
             .addAnnotations(completeField.annotations);
     if (completeField.modifiers.contains(Modifier.FINAL)) {
       // Final fields must be initialized so use the default value.
-      skeleton.initializer(toJavaPoet(getDefaultValueCodeBlock(completeField.type)));
+      skeleton.initializer(toJavaPoet(getDefaultValueCodeBlock(completeField.type).get()));
     }
     return skeleton.build();
   }

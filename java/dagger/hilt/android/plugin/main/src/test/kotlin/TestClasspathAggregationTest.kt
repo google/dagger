@@ -242,12 +242,14 @@ class TestClasspathAggregationTest(
           .trimIndent(),
     )
 
-    // TODO(b/589834973): This should fail with [Dagger/MissingBinding] for String, but currently
-    // succeeds because Hilt still includes testedVariant's configurations for unit tests.
+    val assembleResult = gradleRunner.build()
+    assertEquals(TaskOutcome.SUCCESS, assembleResult.getTask(":assembleDebug").outcome)
+
     gradleRunner.runAdditionalTasks("testDebugUnitTest")
-    val result = gradleRunner.build()
-    assertEquals(TaskOutcome.SUCCESS, result.getTask(":assembleDebug").outcome)
-    assertEquals(TaskOutcome.SUCCESS, result.getTask(":testDebugUnitTest").outcome)
+    val testResult = gradleRunner.buildAndFail()
+    assertThat(testResult.getOutput()).contains("[Dagger/MissingBinding]")
+    assertThat(testResult.getOutput())
+      .contains("String cannot be provided without an @Inject constructor")
   }
 
   // Verifies that substituting ':libB' with ':fakeLibB' (which provides both String and Integer) on
@@ -326,23 +328,10 @@ class TestClasspathAggregationTest(
           .trimIndent(),
     )
 
-    val assembleResult = gradleRunner.build()
-    assertEquals(TaskOutcome.SUCCESS, assembleResult.getTask(":assembleDebug").outcome)
-
-    // TODO(b/589834973): This should succeed, but currently fails because Hilt still includes
-    // testedVariant's configurations for unit tests.
     gradleRunner.runAdditionalTasks("testDebugUnitTest")
-    val testResult = gradleRunner.buildAndFail()
-    if (isLegacyClasspathAggregation) {
-      // Legacy classpath aggregation scans only testedVariant (':libB'), missing ':fakeLibB'.
-      assertThat(testResult.getOutput()).contains("[Dagger/MissingBinding]")
-      assertThat(testResult.getOutput())
-        .contains("Integer cannot be provided without an @Inject constructor")
-    } else {
-      // The aggregating task scans both testedVariant (':libB') and variant (':fakeLibB').
-      assertThat(testResult.getOutput()).contains("[Dagger/DuplicateBindings]")
-      assertThat(testResult.getOutput()).contains("String is bound multiple times")
-    }
+    val result = gradleRunner.build()
+    assertEquals(TaskOutcome.SUCCESS, result.getTask(":assembleDebug").outcome)
+    assertEquals(TaskOutcome.SUCCESS, result.getTask(":testDebugUnitTest").outcome)
   }
 
   private fun createJavaLibrary(dirName: String, dependenciesBlock: String) {

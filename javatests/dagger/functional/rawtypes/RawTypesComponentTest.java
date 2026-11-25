@@ -25,6 +25,7 @@ import dagger.Module;
 import dagger.Provides;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Provider;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -40,6 +41,10 @@ public final class RawTypesComponentTest {
     Set rawSet();
 
     Map rawMap();
+
+    Map[] rawMapArray();
+
+    Provider<Map[]> rawMapArrayProvider();
   }
 
   @SuppressWarnings("rawtypes")
@@ -54,6 +59,11 @@ public final class RawTypesComponentTest {
     static Set rawSet() {
       return ImmutableSet.of(STRING_VALUE, INT_VALUE);
     }
+
+    @Provides
+    static Map[] rawMapArray() {
+      return new Map[] {ImmutableMap.of(INT_VALUE, STRING_VALUE)};
+    }
   }
 
   @Test
@@ -61,5 +71,7 @@ public final class RawTypesComponentTest {
     RawTypesComponent component = DaggerRawTypesComponentTest_RawTypesComponent.create();
     assertThat(component.rawSet()).containsExactly(STRING_VALUE, INT_VALUE);
     assertThat(component.rawMap()).containsExactly(INT_VALUE, STRING_VALUE);
+    assertThat(component.rawMapArray()).asList().containsExactly(component.rawMap());
+    assertThat(component.rawMapArrayProvider().get()).asList().containsExactly(component.rawMap());
   }
 }

@@ -1,0 +1,41 @@
+package test
+
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Preconditions
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmStatic
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
+)
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class TestModule_StringArrayFactory : Factory<Any?> {
+  public override fun `get`(): Any? = stringArray()
+
+  private object InstanceHolder {
+    @JvmField
+    public val INSTANCE: TestModule_StringArrayFactory = TestModule_StringArrayFactory()
+  }
+
+  public companion object {
+    @JvmStatic
+    public fun create(): TestModule_StringArrayFactory = InstanceHolder.INSTANCE
+
+    @JvmStatic
+    public fun stringArray(): Any? = Preconditions.checkNotNullFromProvides(TestModule.stringArray())
+  }
+}

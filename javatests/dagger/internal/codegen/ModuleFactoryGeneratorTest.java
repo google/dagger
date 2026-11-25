@@ -676,6 +676,66 @@ public class ModuleFactoryGeneratorTest {
   }
 
   @Test
+  public void providedArrayTypes() {
+    Source packagePrivateFile =
+        CompilerTests.javaSource("test.PackagePrivate", "package test;", "class PackagePrivate {}");
+    Source moduleFile =
+        CompilerTests.javaSource(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import java.util.List;",
+            "",
+            "@Module",
+            "interface TestModule {",
+            "  @Provides",
+            "  static int[] intArray() {",
+            "    return new int[0];",
+            "  }",
+            "",
+            "  @Provides",
+            "  static int[][] int2dArray() {",
+            "    return new int[0][0];",
+            "  }",
+            "",
+            "  @Provides",
+            "  static String[] stringArray() {",
+            "    return new String[0];",
+            "  }",
+            "",
+            "  @Provides",
+            "  @SuppressWarnings(\"unchecked\")",
+            "  static List<String>[] stringListArray() {",
+            "    return (List<String>[]) new List<?>[0];",
+            "  }",
+            "",
+            "  @Provides",
+            "  @SuppressWarnings(\"rawtypes\")",
+            "  static List[] rawListArray() {",
+            "    return new List[0];",
+            "  }",
+            "",
+            "  @Provides",
+            "  static PackagePrivate[] packagePrivateArray() {",
+            "    return new PackagePrivate[0];",
+            "  }",
+            "}");
+    daggerCompiler(packagePrivateFile, moduleFile)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              assertSourceMatchesGolden(subject, "test/TestModule_IntArrayFactory");
+              assertSourceMatchesGolden(subject, "test/TestModule_Int2dArrayFactory");
+              assertSourceMatchesGolden(subject, "test/TestModule_StringArrayFactory");
+              assertSourceMatchesGolden(subject, "test/TestModule_StringListArrayFactory");
+              assertSourceMatchesGolden(subject, "test/TestModule_RawListArrayFactory");
+              assertSourceMatchesGolden(subject, "test/TestModule_PackagePrivateArrayFactory");
+            });
+  }
+
+  @Test
   public void privateModule() {
     Source moduleFile =
         CompilerTests.javaSource(

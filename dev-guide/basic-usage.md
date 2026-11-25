@@ -656,11 +656,11 @@ the [README][installation] for more information.
 [Component#dependencies]: https://dagger.dev/api/latest/dagger/Component.html#dependencies--
 [Component#provision-methods]: https://dagger.dev/api/latest/dagger/Component.html#provision-methods
 [Component]: https://dagger.dev/api/latest/dagger/Component.html
-[Dagger Tutorial]: https://dagger.dev/tutorial/
+[Dagger Tutorial]: https://dagger.dev/tutorial/index.html
 [Documented]: http://docs.oracle.com/javase/7/docs/api/java/lang/annotation/Documented.html
 [installation]: https://github.com/google/dagger/blob/master/README.md#installation
 [guava-optional]: https://guava.dev/releases/27.0-jre/api/docs/com/google/common/base/Optional.html
-[Hilt]: https://dagger.dev/hilt/
+[Hilt]: https://dagger.dev/hilt/index.html
 [`javax.inject.Inject`]: http://docs.oracle.com/javaee/7/api/javax/inject/Inject.html
 [jdk-optional]: https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html
 [Lazy]: https://dagger.dev/api/latest/dagger/Lazy.html

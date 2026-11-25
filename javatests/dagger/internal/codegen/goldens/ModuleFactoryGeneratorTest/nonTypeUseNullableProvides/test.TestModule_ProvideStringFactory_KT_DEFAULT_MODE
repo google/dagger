@@ -6,6 +6,7 @@ import dagger.`internal`.QualifierMetadata
 import dagger.`internal`.ScopeMetadata
 import javax.`annotation`.processing.Generated
 import kotlin.Any
+import kotlin.String
 import kotlin.Suppress
 import kotlin.jvm.JvmStatic
 
@@ -21,7 +22,7 @@ import kotlin.jvm.JvmStatic
     "USELESS_CAST",
     "DEPRECATION"
 ])
-public class TestModule_ProvideStringFactory : Factory<Any?> {
+public class TestModule_ProvideStringFactory : Factory<String?> {
   private val module: TestModule
 
   private constructor(module: TestModule) {
@@ -29,7 +30,7 @@ public class TestModule_ProvideStringFactory : Factory<Any?> {
   }
 
   @Nullable
-  public override fun `get`(): Any? = provideString(module)
+  public override fun `get`(): String? = provideString(module)
 
   public companion object {
     @JvmStatic
@@ -37,6 +38,6 @@ public class TestModule_ProvideStringFactory : Factory<Any?> {
 
     @Nullable
     @JvmStatic
-    public fun provideString(instance: Any?): Any? = ((instance) as TestModule).provideString()
+    public fun provideString(instance: Any?): String? = ((instance) as TestModule).provideString()
   }
 }

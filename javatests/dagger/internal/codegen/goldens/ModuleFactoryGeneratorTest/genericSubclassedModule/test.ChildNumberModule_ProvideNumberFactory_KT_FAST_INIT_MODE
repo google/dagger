@@ -7,6 +7,7 @@ import dagger.`internal`.QualifierMetadata
 import dagger.`internal`.ScopeMetadata
 import javax.`annotation`.processing.Generated
 import kotlin.Any
+import kotlin.Number
 import kotlin.Suppress
 import kotlin.jvm.JvmStatic
 
@@ -22,20 +23,20 @@ import kotlin.jvm.JvmStatic
     "USELESS_CAST",
     "DEPRECATION"
 ])
-public class ChildNumberModule_ProvideNumberFactory : Factory<Any?> {
+public class ChildNumberModule_ProvideNumberFactory : Factory<Number?> {
   private val module: ChildNumberModule
 
   private constructor(module: ChildNumberModule) {
     this.module = module
   }
 
-  public override fun `get`(): Any? = provideNumber(module)
+  public override fun `get`(): Number? = provideNumber(module)
 
   public companion object {
     @JvmStatic
     public fun create(module: Any?): ChildNumberModule_ProvideNumberFactory = ChildNumberModule_ProvideNumberFactory((module) as ChildNumberModule)
 
     @JvmStatic
-    public fun provideNumber(instance: Any?): Any? = Preconditions.checkNotNullFromProvides(((instance) as ChildNumberModule).provideNumber())
+    public fun provideNumber(instance: Any?): Number? = Preconditions.checkNotNullFromProvides(((instance) as ChildNumberModule).provideNumber())
   }
 }

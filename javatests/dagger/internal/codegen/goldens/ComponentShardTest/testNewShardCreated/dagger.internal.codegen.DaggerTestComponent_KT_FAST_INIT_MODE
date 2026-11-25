@@ -201,7 +201,7 @@ final class DaggerTestComponent {
       this.binding2Provider = new DelegateFactory<>();
       this.binding4Provider = DoubleCheck.provider(new SwitchingProvider<>(componentImpl, 2));
       this.binding3Provider = DoubleCheck.provider(new SwitchingProvider<>(componentImpl, 1));
-      DelegateFactory.setDelegate((Provider<Object>) (binding2Provider), (Provider<Object>) (DoubleCheck.provider(new SwitchingProvider<>(componentImpl, 0))));
+      DelegateFactory.setDelegate((Provider) (binding2Provider), DoubleCheck.provider(new SwitchingProvider<>(componentImpl, 0)));
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {

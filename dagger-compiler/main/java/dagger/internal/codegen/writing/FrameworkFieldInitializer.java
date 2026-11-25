@@ -115,8 +115,8 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
 
         if (fieldInitializationState == InitializationState.DELEGATED) {
           XCodeBlock delegateFactory = XCodeBlock.of("%N", propertySpec);
-          XCodeBlock delegate = fieldInitialization;
-          codeBuilder.add("%T.setDelegate(%L, %L);", delegateType(), delegateFactory, delegate);
+          codeBuilder.add(
+              "%T.setDelegate(%L, %L);", delegateType(), delegateFactory, fieldInitialization);
         } else {
           codeBuilder.add(initCode);
         }

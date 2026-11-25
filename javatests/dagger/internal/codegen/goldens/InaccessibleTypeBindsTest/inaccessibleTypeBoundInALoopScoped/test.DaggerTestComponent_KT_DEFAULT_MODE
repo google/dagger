@@ -71,7 +71,7 @@ final class DaggerTestComponent {
     private void initialize() {
       this.bindProvider = new DelegateFactory<>();
       this.fooImplProvider = FooImpl_Factory.create(bindProvider);
-      DelegateFactory.setDelegate((Provider<Object>) (bindProvider), (Provider<Object>) (DoubleCheck.provider((Provider) (fooImplProvider))));
+      DelegateFactory.setDelegate((Provider) (bindProvider), DoubleCheck.provider((Provider) (fooImplProvider)));
     }
 
     @Override

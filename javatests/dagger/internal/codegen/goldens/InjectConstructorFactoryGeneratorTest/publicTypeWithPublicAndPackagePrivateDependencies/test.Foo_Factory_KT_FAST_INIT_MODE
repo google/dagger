@@ -22,7 +22,7 @@ import kotlin.jvm.JvmStatic
     "USELESS_CAST",
     "DEPRECATION"
 ])
-public class Foo_Factory : Factory<Any?> {
+public class Foo_Factory : Factory<Foo> {
   private val publicDepProvider: Provider<PublicDep?>
 
   private val packagePrivateDepProvider: Provider<PackagePrivateDep?>
@@ -43,7 +43,7 @@ public class Foo_Factory : Factory<Any?> {
     this.genericPackagePrivateDepProvider = genericPackagePrivateDepProvider
   }
 
-  public override fun `get`(): Any? = newInstance(publicDepProvider.get(), packagePrivateDepProvider.get(), genericPublicDepProvider.get(), genericPackagePrivateDepProvider.get())
+  public override fun `get`(): Foo = newInstance(publicDepProvider.get(), packagePrivateDepProvider.get(), genericPublicDepProvider.get(), genericPackagePrivateDepProvider.get())
 
   public companion object {
     @JvmStatic
@@ -60,6 +60,6 @@ public class Foo_Factory : Factory<Any?> {
       packagePrivateDep: Any?,
       genericPublicDep: Any?,
       genericPackagePrivateDep: Any?,
-    ): Any? = Foo((publicDep) as PublicDep?, (packagePrivateDep) as PackagePrivateDep?, (genericPublicDep) as GenericDep<PublicDep?>?, (genericPackagePrivateDep) as GenericDep<PackagePrivateDep?>?)
+    ): Foo = Foo((publicDep) as PublicDep?, (packagePrivateDep) as PackagePrivateDep?, (genericPublicDep) as GenericDep<PublicDep?>?, (genericPackagePrivateDep) as GenericDep<PackagePrivateDep?>?)
   }
 }

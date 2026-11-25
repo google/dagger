@@ -71,7 +71,7 @@ final class DaggerTestComponent {
     private void initialize() {
       this.bindProvider = new DelegateFactory<>();
       this.fooImplProvider = new SwitchingProvider<>(componentImpl, 0);
-      DelegateFactory.setDelegate((Provider<Object>) (bindProvider), (Provider<Object>) (DoubleCheck.provider((Provider) (fooImplProvider))));
+      DelegateFactory.setDelegate((Provider) (bindProvider), DoubleCheck.provider((Provider) (fooImplProvider)));
     }
 
     @Override

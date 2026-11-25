@@ -10,6 +10,7 @@ import dagger.producers.monitoring.ProductionComponentMonitor
 import java.util.concurrent.Executor
 import javax.`annotation`.processing.Generated
 import kotlin.Any
+import kotlin.String
 import kotlin.Suppress
 import kotlin.Unit
 import kotlin.jvm.JvmStatic
@@ -24,7 +25,7 @@ import kotlin.jvm.JvmStatic
     "USELESS_CAST",
     "DEPRECATION"
 ])
-public class TestModule_ProduceStringFactory : AbstractProducesMethodProducer<Unit?, Any?> {
+public class TestModule_ProduceStringFactory : AbstractProducesMethodProducer<Unit?, String?> {
   private val module: TestModule
 
   private constructor(
@@ -37,7 +38,7 @@ public class TestModule_ProduceStringFactory : AbstractProducesMethodProducer<Un
 
   protected override fun collectDependencies(): ListenableFuture<Unit?> = Futures.immediateFuture(null)
 
-  public override fun callProducesMethod(ignoredVoidArg: Unit?): ListenableFuture<Any?> = (module.produceString()) as ListenableFuture<Any?>
+  public override fun callProducesMethod(ignoredVoidArg: Unit?): ListenableFuture<String?> = (module.produceString()) as ListenableFuture<String?>
 
   public companion object {
     @JvmStatic

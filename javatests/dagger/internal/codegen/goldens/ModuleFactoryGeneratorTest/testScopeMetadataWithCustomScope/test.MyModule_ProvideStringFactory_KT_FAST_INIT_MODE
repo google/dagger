@@ -6,7 +6,7 @@ import dagger.`internal`.Preconditions
 import dagger.`internal`.QualifierMetadata
 import dagger.`internal`.ScopeMetadata
 import javax.`annotation`.processing.Generated
-import kotlin.Any
+import kotlin.String
 import kotlin.Suppress
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmStatic
@@ -23,8 +23,8 @@ import kotlin.jvm.JvmStatic
     "USELESS_CAST",
     "DEPRECATION"
 ])
-public class MyModule_ProvideStringFactory : Factory<Any?> {
-  public override fun `get`(): Any? = provideString()
+public class MyModule_ProvideStringFactory : Factory<String?> {
+  public override fun `get`(): String? = provideString()
 
   private object InstanceHolder {
     @JvmField
@@ -36,6 +36,6 @@ public class MyModule_ProvideStringFactory : Factory<Any?> {
     public fun create(): MyModule_ProvideStringFactory = InstanceHolder.INSTANCE
 
     @JvmStatic
-    public fun provideString(): Any? = Preconditions.checkNotNullFromProvides(MyModule.provideString())
+    public fun provideString(): String? = Preconditions.checkNotNullFromProvides(MyModule.provideString())
   }
 }

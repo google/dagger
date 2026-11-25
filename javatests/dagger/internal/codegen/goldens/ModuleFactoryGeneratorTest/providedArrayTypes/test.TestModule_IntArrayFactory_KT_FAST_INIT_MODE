@@ -6,7 +6,7 @@ import dagger.`internal`.Preconditions
 import dagger.`internal`.QualifierMetadata
 import dagger.`internal`.ScopeMetadata
 import javax.`annotation`.processing.Generated
-import kotlin.Any
+import kotlin.IntArray
 import kotlin.Suppress
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmStatic
@@ -23,8 +23,8 @@ import kotlin.jvm.JvmStatic
     "USELESS_CAST",
     "DEPRECATION"
 ])
-public class TestModule_IntArrayFactory : Factory<Any?> {
-  public override fun `get`(): Any? = intArray()
+public class TestModule_IntArrayFactory : Factory<IntArray?> {
+  public override fun `get`(): IntArray? = intArray()
 
   private object InstanceHolder {
     @JvmField
@@ -36,6 +36,6 @@ public class TestModule_IntArrayFactory : Factory<Any?> {
     public fun create(): TestModule_IntArrayFactory = InstanceHolder.INSTANCE
 
     @JvmStatic
-    public fun intArray(): Any? = Preconditions.checkNotNullFromProvides(TestModule.intArray())
+    public fun intArray(): IntArray? = Preconditions.checkNotNullFromProvides(TestModule.intArray())
   }
 }

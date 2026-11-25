@@ -6,7 +6,6 @@ import dagger.`internal`.Provider
 import dagger.`internal`.QualifierMetadata
 import dagger.`internal`.ScopeMetadata
 import javax.`annotation`.processing.Generated
-import kotlin.Any
 import kotlin.Suppress
 import kotlin.jvm.JvmStatic
 import other.SuperType_MembersInjector
@@ -23,15 +22,15 @@ import other.SuperType_MembersInjector
     "USELESS_CAST",
     "DEPRECATION"
 ])
-public class SubType_Factory : Factory<Any?> {
+public class SubType_Factory : Factory<SubType> {
   private val inaccessibleTypeProvider: Provider<*>
 
   private constructor(inaccessibleTypeProvider: Provider<*>) {
     this.inaccessibleTypeProvider = inaccessibleTypeProvider
   }
 
-  public override fun `get`(): Any? {
-    var instance: Any? = newInstance()
+  public override fun `get`(): SubType {
+    var instance: SubType = newInstance()
     SuperType_MembersInjector.injectInaccessibleType(instance, inaccessibleTypeProvider.get());
     return instance
   }
@@ -41,6 +40,6 @@ public class SubType_Factory : Factory<Any?> {
     public fun create(inaccessibleTypeProvider: Provider<*>): SubType_Factory = SubType_Factory(inaccessibleTypeProvider)
 
     @JvmStatic
-    public fun newInstance(): Any? = SubType()
+    public fun newInstance(): SubType = SubType()
   }
 }

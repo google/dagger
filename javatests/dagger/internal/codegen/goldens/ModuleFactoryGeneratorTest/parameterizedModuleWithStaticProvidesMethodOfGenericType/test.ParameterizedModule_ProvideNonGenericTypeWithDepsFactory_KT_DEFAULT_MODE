@@ -8,6 +8,7 @@ import dagger.`internal`.QualifierMetadata
 import dagger.`internal`.ScopeMetadata
 import javax.`annotation`.processing.Generated
 import kotlin.Any
+import kotlin.String
 import kotlin.Suppress
 import kotlin.jvm.JvmStatic
 
@@ -23,20 +24,20 @@ import kotlin.jvm.JvmStatic
     "USELESS_CAST",
     "DEPRECATION"
 ])
-public class ParameterizedModule_ProvideNonGenericTypeWithDepsFactory : Factory<Any?> {
+public class ParameterizedModule_ProvideNonGenericTypeWithDepsFactory : Factory<String?> {
   private val oProvider: Provider<Any?>
 
   private constructor(oProvider: Provider<Any?>) {
     this.oProvider = oProvider
   }
 
-  public override fun `get`(): Any? = provideNonGenericTypeWithDeps(oProvider.get())
+  public override fun `get`(): String? = provideNonGenericTypeWithDeps(oProvider.get())
 
   public companion object {
     @JvmStatic
     public fun create(oProvider: Provider<*>): ParameterizedModule_ProvideNonGenericTypeWithDepsFactory = ParameterizedModule_ProvideNonGenericTypeWithDepsFactory((oProvider) as Provider<Any?>)
 
     @JvmStatic
-    public fun provideNonGenericTypeWithDeps(o: Any?): Any? = Preconditions.checkNotNullFromProvides(ParameterizedModule.provideNonGenericTypeWithDeps(o))
+    public fun provideNonGenericTypeWithDeps(o: Any?): String? = Preconditions.checkNotNullFromProvides(ParameterizedModule.provideNonGenericTypeWithDeps(o))
   }
 }

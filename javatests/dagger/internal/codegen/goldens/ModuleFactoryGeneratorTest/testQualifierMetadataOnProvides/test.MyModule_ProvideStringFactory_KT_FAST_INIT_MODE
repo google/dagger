@@ -9,6 +9,7 @@ import dagger.`internal`.ScopeMetadata
 import javax.`annotation`.processing.Generated
 import kotlin.Any
 import kotlin.Int
+import kotlin.String
 import kotlin.Suppress
 import kotlin.jvm.JvmStatic
 
@@ -27,20 +28,20 @@ import kotlin.jvm.JvmStatic
     "USELESS_CAST",
     "DEPRECATION"
 ])
-public class MyModule_ProvideStringFactory : Factory<Any?> {
+public class MyModule_ProvideStringFactory : Factory<String?> {
   private val iProvider: Provider<Int>
 
   private constructor(iProvider: Provider<Int>) {
     this.iProvider = iProvider
   }
 
-  public override fun `get`(): Any? = provideString(iProvider.get())
+  public override fun `get`(): String? = provideString(iProvider.get())
 
   public companion object {
     @JvmStatic
     public fun create(iProvider: Provider<*>): MyModule_ProvideStringFactory = MyModule_ProvideStringFactory((iProvider) as Provider<Int>)
 
     @JvmStatic
-    public fun provideString(i: Any?): Any? = Preconditions.checkNotNullFromProvides(MyModule.provideString((i) as Int))
+    public fun provideString(i: Any?): String? = Preconditions.checkNotNullFromProvides(MyModule.provideString((i) as Int))
   }
 }

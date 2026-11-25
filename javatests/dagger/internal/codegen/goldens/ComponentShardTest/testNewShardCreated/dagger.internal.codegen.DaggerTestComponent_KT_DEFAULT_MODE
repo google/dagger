@@ -176,7 +176,7 @@ final class DaggerTestComponent {
       this.binding2Provider = new DelegateFactory<>();
       this.binding4Provider = DoubleCheck.provider(Binding4_Factory.create(binding5Provider, binding2Provider));
       this.binding3Provider = DoubleCheck.provider(Binding3_Factory.create(binding4Provider));
-      DelegateFactory.setDelegate((Provider<Object>) (binding2Provider), (Provider<Object>) (DoubleCheck.provider(Binding2_Factory.create(binding3Provider))));
+      DelegateFactory.setDelegate((Provider) (binding2Provider), DoubleCheck.provider(Binding2_Factory.create(binding3Provider)));
     }
   }
 

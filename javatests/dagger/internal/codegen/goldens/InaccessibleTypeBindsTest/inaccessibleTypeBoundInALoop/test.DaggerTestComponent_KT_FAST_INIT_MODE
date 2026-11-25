@@ -64,7 +64,7 @@ final class DaggerTestComponent {
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.fooImplProvider = new DelegateFactory<>();
-      DelegateFactory.setDelegate((Provider<Object>) (fooImplProvider), (Provider<Object>) (new SwitchingProvider<>(componentImpl, 0)));
+      DelegateFactory.setDelegate((Provider) (fooImplProvider), new SwitchingProvider<>(componentImpl, 0));
     }
 
     @Override

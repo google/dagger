@@ -277,12 +277,12 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
             .addStatement("return %T.immediateFuture(null)", XTypeNames.FUTURES)
             .build();
       case 1: {
-        DependencyRequest asyncDependency = getOnlyElement(asyncDependencies);
-        XPropertySpec asyncDependencyField = factoryFields.get(asyncDependency);
-        XCodeBlock returnCodeBlock =
-            XCodeBlock.of("%L", producedCodeBlock(asyncDependency, asyncDependencyField));
-        return methodBuilder.addStatement("return %L", returnCodeBlock).build();
-      }
+          DependencyRequest asyncDependency = getOnlyElement(asyncDependencies);
+          XPropertySpec asyncDependencyField = factoryFields.get(asyncDependency);
+          XCodeBlock returnCodeBlock =
+              XCodeBlock.of("%L", producedCodeBlock(asyncDependency, asyncDependencyField));
+          return methodBuilder.addStatement("return %L", returnCodeBlock).build();
+        }
       default:
         XCodeBlock.Builder argAssignments = XCodeBlock.builder();
         ImmutableList.Builder<XCodeBlock> argNames = ImmutableList.builder();
@@ -471,7 +471,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
 
   private XTypeName contributedTypeName(ProductionBinding binding) {
     XTypeName typeName =
-        isTypeAccessibleFromPublicApi(binding.contributedType(), compilerOptions)
+        isTypeAccessibleFromPublicApi(binding.contributedType())
             ? binding.contributedType().asTypeName()
             : XTypeName.ANY_OBJECT.copy(/* nullable= */ true);
     return asNullableTypeName(typeName, binding.nullability(), compilerOptions);

@@ -12,6 +12,7 @@ import java.util.concurrent.Executor
 import javax.`annotation`.processing.Generated
 import kotlin.Any
 import kotlin.Int
+import kotlin.String
 import kotlin.Suppress
 import kotlin.jvm.JvmStatic
 
@@ -25,7 +26,7 @@ import kotlin.jvm.JvmStatic
     "USELESS_CAST",
     "DEPRECATION"
 ])
-public class TestModule_ProduceStringFactory : AbstractProducesMethodProducer<Any?, Any?> {
+public class TestModule_ProduceStringFactory : AbstractProducesMethodProducer<Any?, String?> {
   private val module: TestModule
 
   private val iProducer: Producer<Int?>
@@ -42,7 +43,7 @@ public class TestModule_ProduceStringFactory : AbstractProducesMethodProducer<An
 
   protected override fun collectDependencies(): ListenableFuture<Any?> = (iProducer.get()) as ListenableFuture<Any?>
 
-  public override fun callProducesMethod(i: Any?): ListenableFuture<Any?> = (module.produceString((i) as Int?)) as ListenableFuture<Any?>
+  public override fun callProducesMethod(i: Any?): ListenableFuture<String?> = (module.produceString((i) as Int?)) as ListenableFuture<String?>
 
   public companion object {
     @JvmStatic

@@ -25,9 +25,6 @@ compat_processor_plugin(
     generates_api = 1,
     javac_processor_name = "DefineComponentProcessor",
     processor_lib_dep = ":processor_lib",
-    visibility = [
-        "//hilt-core/main/java/dagger/hilt:__pkg__",
-    ],
 )
 
 java_library(

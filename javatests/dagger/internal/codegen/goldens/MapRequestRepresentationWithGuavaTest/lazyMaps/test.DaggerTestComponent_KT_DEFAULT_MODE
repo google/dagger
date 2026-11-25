@@ -102,17 +102,17 @@ final class DaggerTestComponent {
 
     MapLazyFactory<Object, Object> mapOfStringAndLazyOfStringBuilder() {
       MapLazyFactory.Builder<Object, Object> builder = MapLazyFactory.builder(3);
-      builder.put("key0", (Provider<Object>) (string0Provider));
-      builder.put("key1", (Provider<Object>) (string1Provider));
-      builder.put("key2", (Provider<Object>) (string2Provider));
+      builder.put("key0", string0Provider);
+      builder.put("key1", string1Provider);
+      builder.put("key2", string2Provider);
       return builder.build();
     }
 
     MapProviderLazyFactory<Object, Object> mapOfStringAndProviderOfLazyOfStringBuilder() {
       MapProviderLazyFactory.Builder<Object, Object> builder = MapProviderLazyFactory.builder(3);
-      builder.put("key0", (Provider<Object>) (string0Provider));
-      builder.put("key1", (Provider<Object>) (string1Provider));
-      builder.put("key2", (Provider<Object>) (string2Provider));
+      builder.put("key0", string0Provider);
+      builder.put("key1", string1Provider);
+      builder.put("key2", string2Provider);
       return builder.build();
     }
 

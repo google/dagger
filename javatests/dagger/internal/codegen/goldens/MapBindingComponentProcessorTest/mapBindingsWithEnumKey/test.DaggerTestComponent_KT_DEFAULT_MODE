@@ -97,8 +97,8 @@ final class DaggerTestComponent {
     MapProviderFactory<Object, Object> mapOfPathEnumAndProviderOfHandlerBuilder(
         MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
       MapProviderFactory.Builder<Object, Object> builder = MapProviderFactory.builder(2);
-      builder.put(PathEnum.ADMIN, (Provider<Object>) (provideAdminHandlerProvider));
-      builder.put(PathEnum.LOGIN, (Provider<Object>) (provideLoginHandlerProvider));
+      builder.put(PathEnum.ADMIN, provideAdminHandlerProvider);
+      builder.put(PathEnum.LOGIN, provideLoginHandlerProvider);
       return builder.build();
     }
 

@@ -97,8 +97,8 @@ final class DaggerTestComponent {
     MapProviderFactory<Object, Object> mapOfStringAndProviderOfHandlerBuilder(
         MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
       MapProviderFactory.Builder<Object, Object> builder = MapProviderFactory.builder(2);
-      builder.put("Admin", (Provider<Object>) (provideAdminHandlerProvider));
-      builder.put("Login", (Provider<Object>) (provideLoginHandlerProvider));
+      builder.put("Admin", provideAdminHandlerProvider);
+      builder.put("Login", provideLoginHandlerProvider);
       return builder.build();
     }
 

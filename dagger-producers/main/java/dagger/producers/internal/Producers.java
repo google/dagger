@@ -125,7 +125,7 @@ public final class Producers {
    * Returns a producer that immediately executes the binding logic for the given provider every
    * time it is called.
    */
-  public static <T> Producer<T> producerFromProvider(final Provider<T> provider) {
+  public static <T> Producer<T> producerFromProvider(final Provider<? extends T> provider) {
     checkNotNull(provider);
     return new CompletedProducer<T>() {
       @Override
@@ -140,7 +140,8 @@ public final class Producers {
    * Dagger. Do not use directly.
    */
   @Deprecated
-  public static <T> Producer<T> producerFromProvider(final javax.inject.Provider<T> provider) {
+  public static <T> Producer<T> producerFromProvider(
+      final javax.inject.Provider<? extends T> provider) {
     return producerFromProvider(asDaggerProvider(provider));
   }
 

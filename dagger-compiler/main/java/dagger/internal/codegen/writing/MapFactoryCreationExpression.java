@@ -103,9 +103,7 @@ final class MapFactoryCreationExpression extends MultibindingFactoryCreationExpr
       for (DependencyRequest dependency : binding.dependencies()) {
         builderMethodCalls.addStatement(
             "%N.put(%L, %L)",
-            builderName,
-            keyExpression(dependency),
-            valueExpression(dependency));
+            builderName, keyExpression(dependency), multibindingDependencyExpression(dependency));
       }
 
       XFunSpec methodSpec =
@@ -178,11 +176,6 @@ final class MapFactoryCreationExpression extends MultibindingFactoryCreationExpr
     return useLazyClassKey
         ? getLazyClassMapKeyExpression(graph.contributionBinding(dependency.key()))
         : getMapKeyExpression(contributionBinding, componentImplementation.name(), processingEnv);
-  }
-
-  private XCodeBlock valueExpression(DependencyRequest dependency) {
-    XCodeBlock valueExpression = multibindingDependencyExpression(dependency);
-    return valueExpression;
   }
 
   private static XClassName lazyMapFactoryClassName(MultiboundMapBinding binding) {

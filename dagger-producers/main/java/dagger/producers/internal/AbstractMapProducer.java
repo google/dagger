@@ -62,15 +62,16 @@ abstract class AbstractMapProducer<K, V, V2> extends AbstractProducer<Map<K, V2>
     // expand their accessibility
 
     /** Associates {@code key} with {@code producerOfValue}. */
-    Builder<K, V, V2> put(K key, Producer<V> producerOfValue) {
+    @SuppressWarnings("unchecked")
+    Builder<K, V, V2> put(K key, Producer<? extends V> producerOfValue) {
       checkNotNull(key, "key");
       checkNotNull(producerOfValue, "producer of value");
-      mapBuilder.put(key, producerOfValue);
+      mapBuilder.put(key, (Producer<V>) producerOfValue);
       return this;
     }
 
     /** Associates {@code key} with {@code providerOfValue}. */
-    Builder<K, V, V2> put(K key, Provider<V> providerOfValue) {
+    Builder<K, V, V2> put(K key, Provider<? extends V> providerOfValue) {
       checkNotNull(key, "key");
       checkNotNull(providerOfValue, "provider of value");
       mapBuilder.put(key, producerFromProvider(providerOfValue));
@@ -82,7 +83,7 @@ abstract class AbstractMapProducer<K, V, V2> extends AbstractProducer<Map<K, V2>
      * Dagger. Do not use directly.
      */
     @Deprecated
-    Builder<K, V, V2> put(K key, javax.inject.Provider<V> providerOfValue) {
+    Builder<K, V, V2> put(K key, javax.inject.Provider<? extends V> providerOfValue) {
       return put(key, asDaggerProvider(providerOfValue));
     }
 

@@ -59,8 +59,9 @@ abstract class AbstractMapFactory<K, V, V2> implements Factory<Map<K, V2>> {
     // expand their accessibility
 
     /** Associates {@code key} with {@code providerOfValue}. */
-    Builder<K, V, V2> put(K key, Provider<V> providerOfValue) {
-      map.put(checkNotNull(key, "key"), checkNotNull(providerOfValue, "provider"));
+    @SuppressWarnings("unchecked")
+    Builder<K, V, V2> put(K key, Provider<? extends V> providerOfValue) {
+      map.put(checkNotNull(key, "key"), (Provider<V>) checkNotNull(providerOfValue, "provider"));
       return this;
     }
 

@@ -55,7 +55,7 @@ public final class MapProviderFactory<K, V> extends AbstractMapFactory<K, V, Pro
     }
 
     @Override
-    public Builder<K, V> put(K key, Provider<V> providerOfValue) {
+    public Builder<K, V> put(K key, Provider<? extends V> providerOfValue) {
       super.put(key, providerOfValue);
       return this;
     }
@@ -65,7 +65,7 @@ public final class MapProviderFactory<K, V> extends AbstractMapFactory<K, V, Pro
      * Dagger. Do not use directly.
      */
     @Deprecated
-    public Builder<K, V> put(K key, javax.inject.Provider<V> providerOfValue) {
+    public Builder<K, V> put(K key, javax.inject.Provider<? extends V> providerOfValue) {
       return put(key, asDaggerProvider(providerOfValue));
     }
 

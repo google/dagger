@@ -98,13 +98,13 @@ public final class MapOfProducedProducer<K, V> extends AbstractMapProducer<K, V,
     }
 
     @Override
-    public Builder<K, V> put(K key, Producer<V> producerOfValue) {
+    public Builder<K, V> put(K key, Producer<? extends V> producerOfValue) {
       super.put(key, producerOfValue);
       return this;
     }
 
     @Override
-    public Builder<K, V> put(K key, Provider<V> providerOfValue) {
+    public Builder<K, V> put(K key, Provider<? extends V> providerOfValue) {
       super.put(key, providerOfValue);
       return this;
     }
@@ -114,7 +114,7 @@ public final class MapOfProducedProducer<K, V> extends AbstractMapProducer<K, V,
      * Dagger. Do not use directly.
      */
     @Deprecated
-    public Builder<K, V> put(K key, javax.inject.Provider<V> providerOfValue) {
+    public Builder<K, V> put(K key, javax.inject.Provider<? extends V> providerOfValue) {
       return put(key, asDaggerProvider(providerOfValue));
     }
 

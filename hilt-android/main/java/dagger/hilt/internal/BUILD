@@ -15,11 +15,12 @@
 # Description:
 #   Internal Hilt libraries
 
+load("@rules_android//rules:rules.bzl", "android_library")
 load("@rules_java//java:defs.bzl", "java_library")
 
 package(default_visibility = ["//:src"])
 
-java_library(
+android_library(
     name = "test_singleton_component_manager",
     srcs = ["TestSingletonComponentManager.java"],
     deps = ["//hilt-core/main/java/dagger/hilt/internal:component_manager"],

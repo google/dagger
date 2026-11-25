@@ -13,7 +13,6 @@
 # limitations under the License.
 
 load("@rules_android//rules:rules.bzl", "android_library")
-load("@rules_java//java:defs.bzl", "java_library")
 
 # Description:
 #   A library based on Hilt that provides standard components and automated injection for Android.
@@ -147,7 +146,7 @@ android_library(
     ],
 )
 
-java_library(
+android_library(
     name = "package_info",
     srcs = ["package-info.java"],
     deps = [

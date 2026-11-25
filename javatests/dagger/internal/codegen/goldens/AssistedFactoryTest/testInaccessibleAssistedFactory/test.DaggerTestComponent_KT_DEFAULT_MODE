@@ -47,10 +47,7 @@ final class DaggerTestComponent {
 
     InaccessibleFoo_Factory inaccessibleFooProvider;
 
-    /**
-     * {@code Provider<InaccessibleFooFactory>}
-     */
-    Provider<?> inaccessibleFooFactoryProvider;
+    Provider<InaccessibleFooFactory> inaccessibleFooFactoryProvider;
 
     ComponentImpl() {
 

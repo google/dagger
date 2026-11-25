@@ -60,10 +60,7 @@ final class DaggerParent {
   private static final class ComponentImpl implements Parent {
     private final ComponentImpl componentImpl = this;
 
-    /**
-     * {@code Provider<java.lang.Number>}
-     */
-    Provider<?> numberProvider;
+    Provider<Number> numberProvider;
 
     ComponentImpl() {
 
@@ -73,7 +70,7 @@ final class DaggerParent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.numberProvider = DoubleCheck.provider(new SwitchingProvider<>(componentImpl, 0));
+      this.numberProvider = DoubleCheck.provider(new SwitchingProvider<Number>(componentImpl, 0));
     }
 
     @Override

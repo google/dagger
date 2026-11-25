@@ -58,7 +58,7 @@ final class DaggerTestComponent {
     }
 
     Object fooImpl() {
-      return FooImpl_Factory.newInstance(fooImplProvider);
+      return FooImpl_Factory.newInstance(((Provider) (fooImplProvider)));
     }
 
     @SuppressWarnings("unchecked")
@@ -87,7 +87,7 @@ final class DaggerTestComponent {
       public T get() {
         switch (id) {
           case 0: // other.FooImpl
-          return (T) FooImpl_Factory.newInstance(componentImpl.fooImplProvider);
+          return (T) FooImpl_Factory.newInstance(((Provider) (componentImpl.fooImplProvider)));
 
           default: throw new AssertionError(id);
         }

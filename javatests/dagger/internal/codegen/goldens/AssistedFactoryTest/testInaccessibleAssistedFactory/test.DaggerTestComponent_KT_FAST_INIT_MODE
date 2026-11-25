@@ -47,10 +47,7 @@ final class DaggerTestComponent {
   private static final class ComponentImpl implements TestComponent {
     private final ComponentImpl componentImpl = this;
 
-    /**
-     * {@code Provider<InaccessibleFooFactory>}
-     */
-    Provider<?> inaccessibleFooFactoryProvider;
+    Provider<InaccessibleFooFactory> inaccessibleFooFactoryProvider;
 
     ComponentImpl() {
 
@@ -60,7 +57,7 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.inaccessibleFooFactoryProvider = SingleCheck.provider(new SwitchingProvider<>(componentImpl, 0));
+      this.inaccessibleFooFactoryProvider = SingleCheck.provider(new SwitchingProvider<InaccessibleFooFactory>(componentImpl, 0));
     }
 
     @Override

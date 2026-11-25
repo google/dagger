@@ -47,10 +47,7 @@ final class DaggerTestComponent {
   private static final class ComponentImpl implements TestComponent {
     private final ComponentImpl componentImpl = this;
 
-    /**
-     * {@code Provider<Foo>}
-     */
-    Provider<?> bindProvider;
+    Provider<Foo> bindProvider;
 
     /**
      * {@code Provider<other.FooImpl>}
@@ -71,7 +68,7 @@ final class DaggerTestComponent {
     private void initialize() {
       this.bindProvider = new DelegateFactory<>();
       this.fooImplProvider = new SwitchingProvider<>(componentImpl, 0);
-      DelegateFactory.setDelegate((Provider) (bindProvider), DoubleCheck.provider((Provider) (fooImplProvider)));
+      DelegateFactory.setDelegate(bindProvider, DoubleCheck.provider((Provider) (fooImplProvider)));
     }
 
     @Override

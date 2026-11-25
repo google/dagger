@@ -47,10 +47,7 @@ final class DaggerTestComponent {
 
     PublicFoo_Factory publicFooProvider;
 
-    /**
-     * {@code Provider<FooFactory>}
-     */
-    Provider<?> fooFactoryProvider;
+    Provider<FooFactory> fooFactoryProvider;
 
     ComponentImpl() {
 

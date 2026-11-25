@@ -60,10 +60,7 @@ final class DaggerParent {
   private static final class ComponentImpl implements Parent {
     private final ComponentImpl componentImpl = this;
 
-    /**
-     * {@code Provider<java.lang.Number>}
-     */
-    Provider<?> numberProvider;
+    Provider<Number> numberProvider;
 
     ComponentImpl() {
 

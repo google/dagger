@@ -48,10 +48,7 @@ final class DaggerTestComponent {
   private static final class ComponentImpl implements TestComponent {
     private final ComponentImpl componentImpl = this;
 
-    /**
-     * {@code Provider<Maybe>}
-     */
-    Provider<?> provideMaybeProvider;
+    Provider<Maybe> provideMaybeProvider;
 
     ComponentImpl() {
 

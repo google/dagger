@@ -49,10 +49,7 @@ final class DaggerBComponent {
 
     private final ComponentImpl componentImpl = this;
 
-    /**
-     * {@code Provider<java.lang.String[]>}
-     */
-    Provider<?> stringsProvider;
+    Provider<String[]> stringsProvider;
 
     ComponentImpl(ArrayComponent arrayComponentParam) {
       this.arrayComponent = arrayComponentParam;

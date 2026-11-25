@@ -49,7 +49,7 @@ final class DaggerTestComponent {
 
     @Override
     public Provider<CharSequence> charSequence() {
-      return (Provider<CharSequence>) ((Object) (TestModule_ProvideStringFactory.create()));
+      return (Provider<CharSequence>) ((Object) (((dagger.internal.Provider) (TestModule_ProvideStringFactory.create()))));
     }
 
     @Override

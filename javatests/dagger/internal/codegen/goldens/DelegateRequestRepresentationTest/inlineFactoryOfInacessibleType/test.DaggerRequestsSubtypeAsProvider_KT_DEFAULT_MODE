@@ -51,7 +51,7 @@ final class DaggerRequestsSubtypeAsProvider {
 
     @Override
     public Provider<Supertype> supertypeProvider() {
-      return (Provider<Supertype>) ((Object) (Subtype_Factory.create()));
+      return (Provider<Supertype>) ((Object) (((dagger.internal.Provider) (Subtype_Factory.create()))));
     }
   }
 }

@@ -57,15 +57,9 @@ final class DaggerBComponent {
   private static final class ComponentImpl implements BComponent {
     private final ComponentImpl componentImpl = this;
 
-    /**
-     * {@code Provider<A>}
-     */
-    Provider<?> aProvider;
+    Provider<A> aProvider;
 
-    /**
-     * {@code Provider<pkg2.A>}
-     */
-    Provider<?> aProvider2;
+    Provider<pkg2.A> aProvider2;
 
     ComponentImpl(AComponent aComponentParam, pkg2.AComponent aComponentParam2) {
 

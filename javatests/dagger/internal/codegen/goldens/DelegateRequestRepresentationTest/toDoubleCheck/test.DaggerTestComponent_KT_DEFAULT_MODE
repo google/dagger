@@ -54,15 +54,9 @@ final class DaggerTestComponent {
      */
     Provider<?> reusableScopedProvider;
 
-    /**
-     * {@code Provider<Object>}
-     */
-    Provider<?> reusableProvider;
+    Provider<Object> reusableProvider;
 
-    /**
-     * {@code Provider<Object>}
-     */
-    Provider<?> unscopedProvider;
+    Provider<Object> unscopedProvider;
 
     ComponentImpl() {
 

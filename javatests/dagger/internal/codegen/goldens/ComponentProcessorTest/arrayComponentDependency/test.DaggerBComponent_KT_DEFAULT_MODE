@@ -47,10 +47,7 @@ final class DaggerBComponent {
   private static final class ComponentImpl implements BComponent {
     private final ComponentImpl componentImpl = this;
 
-    /**
-     * {@code Provider<String[]>}
-     */
-    Provider<?> stringsProvider;
+    Provider<String[]> stringsProvider;
 
     ComponentImpl(ArrayComponent arrayComponentParam) {
 

@@ -49,10 +49,7 @@ final class DaggerBComponent {
 
     private final ComponentImpl componentImpl = this;
 
-    /**
-     * {@code Provider<java.lang.String>}
-     */
-    Provider<?> nullableStringProvider;
+    Provider<String> nullableStringProvider;
 
     ComponentImpl(NullableStringComponent nullableStringComponentParam) {
       this.nullableStringComponent = nullableStringComponentParam;

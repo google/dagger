@@ -62,7 +62,7 @@ final class DaggerRequestsSubtypeAsProvider {
 
     @Override
     public javax.inject.Provider<Supertype> supertypeProvider() {
-      return (javax.inject.Provider<Supertype>) ((Object) (subtypeProvider));
+      return (javax.inject.Provider<Supertype>) ((Object) (((Provider) (subtypeProvider))));
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {

@@ -8,6 +8,7 @@ import dagger.internal.MapLazyFactory;
 import dagger.internal.MapProviderLazyFactory;
 import dagger.internal.Provider;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.processing.Generated;
 
 @DaggerGenerated
@@ -48,30 +49,15 @@ final class DaggerTestComponent {
   private static final class ComponentImpl implements TestComponent {
     private final ComponentImpl componentImpl = this;
 
-    /**
-     * {@code Provider<java.util.concurrent.atomic.AtomicInteger>}
-     */
-    Provider<?> provideAtomicIntegerProvider;
+    Provider<AtomicInteger> provideAtomicIntegerProvider;
 
-    /**
-     * {@code Provider<String>}
-     */
-    Provider<?> provideStringProvider;
+    Provider<String> provideStringProvider;
 
-    /**
-     * {@code Provider<String>}
-     */
-    Provider<?> string0Provider;
+    Provider<String> string0Provider;
 
-    /**
-     * {@code Provider<String>}
-     */
-    Provider<?> string1Provider;
+    Provider<String> string1Provider;
 
-    /**
-     * {@code Provider<String>}
-     */
-    Provider<?> string2Provider;
+    Provider<String> string2Provider;
 
     /**
      * {@code Provider<Map<String, Lazy<String>>>}

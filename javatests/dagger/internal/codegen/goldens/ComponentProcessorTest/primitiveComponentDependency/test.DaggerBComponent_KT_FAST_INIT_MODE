@@ -49,10 +49,7 @@ final class DaggerBComponent {
 
     private final ComponentImpl componentImpl = this;
 
-    /**
-     * {@code Provider<Integer>}
-     */
-    Provider<?> iProvider;
+    Provider<Integer> iProvider;
 
     ComponentImpl(IntComponent intComponentParam) {
       this.intComponent = intComponentParam;

@@ -48,10 +48,7 @@ final class DaggerTestComponent {
   private static final class ComponentImpl implements TestComponent {
     private final ComponentImpl componentImpl = this;
 
-    /**
-     * {@code Provider<FooFactory>}
-     */
-    Provider<?> fooFactoryProvider;
+    Provider<FooFactory> fooFactoryProvider;
 
     ComponentImpl() {
 
@@ -61,7 +58,7 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.fooFactoryProvider = SingleCheck.provider(new SwitchingProvider<>(componentImpl, 0));
+      this.fooFactoryProvider = SingleCheck.provider(new SwitchingProvider<FooFactory>(componentImpl, 0));
     }
 
     @Override

@@ -46,20 +46,11 @@ final class DaggerTestComponent {
 
     private final SubImpl subImpl = this;
 
-    /**
-     * {@code Provider<Long>}
-     */
-    Provider<?> provideLong3Provider;
+    Provider<Long> provideLong3Provider;
 
-    /**
-     * {@code Provider<Long>}
-     */
-    Provider<?> provideLong4Provider;
+    Provider<Long> provideLong4Provider;
 
-    /**
-     * {@code Provider<Long>}
-     */
-    Provider<?> provideLong5Provider;
+    Provider<Long> provideLong5Provider;
 
     SubImpl(ComponentImpl componentImpl) {
       this.componentImpl = componentImpl;
@@ -142,25 +133,13 @@ final class DaggerTestComponent {
   private static final class ComponentImpl implements TestComponent {
     private final ComponentImpl componentImpl = this;
 
-    /**
-     * {@code Provider<Integer>}
-     */
-    Provider<?> provideIntProvider;
+    Provider<Integer> provideIntProvider;
 
-    /**
-     * {@code Provider<Long>}
-     */
-    Provider<?> provideLong0Provider;
+    Provider<Long> provideLong0Provider;
 
-    /**
-     * {@code Provider<Long>}
-     */
-    Provider<?> provideLong1Provider;
+    Provider<Long> provideLong1Provider;
 
-    /**
-     * {@code Provider<Long>}
-     */
-    Provider<?> provideLong2Provider;
+    Provider<Long> provideLong2Provider;
 
     ComponentImpl() {
 

@@ -59,10 +59,7 @@ final class DaggerTestComponent {
      */
     Provider<?> unscopedProvider;
 
-    /**
-     * {@code Provider<Object>}
-     */
-    Provider<?> unscopedProvider2;
+    Provider<Object> unscopedProvider2;
 
     ComponentImpl() {
 

@@ -49,10 +49,7 @@ final class DaggerTestComponent {
      */
     Provider<?> fooImplProvider;
 
-    /**
-     * {@code Provider<Foo>}
-     */
-    Provider<?> bindProvider;
+    Provider<Foo> bindProvider;
 
     ComponentImpl() {
 

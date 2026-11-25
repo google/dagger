@@ -11,6 +11,7 @@ import dagger.producers.Producer;
 import dagger.producers.internal.CancellationListener;
 import dagger.producers.internal.Producers;
 import dagger.producers.monitoring.ProductionComponentMonitor;
+import java.util.concurrent.Executor;
 import javax.annotation.processing.Generated;
 
 @DaggerGenerated
@@ -73,25 +74,16 @@ final class DaggerTestClass_SimpleComponent {
 
     private final ComponentImpl componentImpl = this;
 
-    /**
-     * {@code Provider<java.util.concurrent.Executor>}
-     */
-    Provider<?> executorProvider;
+    Provider<Executor> executorProvider;
 
-    /**
-     * {@code Provider<java.util.concurrent.Executor>}
-     */
-    Provider<?> productionImplementationExecutorProvider;
+    Provider<Executor> productionImplementationExecutorProvider;
 
     /**
      * {@code Provider<TestClass.SimpleComponent>}
      */
     Provider<?> simpleComponentProvider;
 
-    /**
-     * {@code Provider<ProductionComponentMonitor>}
-     */
-    Provider<?> monitorProvider;
+    Provider<ProductionComponentMonitor> monitorProvider;
 
     /**
      * {@code Provider<TestClass.B>}
@@ -125,7 +117,7 @@ final class DaggerTestClass_SimpleComponent {
       this.executorProvider = new SwitchingProvider<>(componentImpl, 0);
       this.productionImplementationExecutorProvider = DoubleCheck.provider((Provider) (executorProvider));
       this.simpleComponentProvider = InstanceFactory.create((TestClass.SimpleComponent) (componentImpl));
-      this.monitorProvider = DoubleCheck.provider(new SwitchingProvider<>(componentImpl, 1));
+      this.monitorProvider = DoubleCheck.provider(new SwitchingProvider<ProductionComponentMonitor>(componentImpl, 1));
       this.bProvider = new SwitchingProvider<>(componentImpl, 2);
       this.bProducer = Producers.producerFromProvider(bProvider);
       this.aProducer = TestClass_AModule_AFactory.create(aModuleParam, productionImplementationExecutorProvider, monitorProvider, bProducer);

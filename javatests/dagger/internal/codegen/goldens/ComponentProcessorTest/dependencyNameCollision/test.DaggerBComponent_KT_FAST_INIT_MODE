@@ -4,6 +4,7 @@ import dagger.internal.DaggerGenerated;
 import dagger.internal.Preconditions;
 import dagger.internal.Provider;
 import javax.annotation.processing.Generated;
+import pkg1.A;
 import pkg1.AComponent;
 
 @DaggerGenerated
@@ -60,15 +61,9 @@ final class DaggerBComponent {
 
     private final ComponentImpl componentImpl = this;
 
-    /**
-     * {@code Provider<pkg1.A>}
-     */
-    Provider<?> aProvider;
+    Provider<A> aProvider;
 
-    /**
-     * {@code Provider<pkg2.A>}
-     */
-    Provider<?> aProvider2;
+    Provider<pkg2.A> aProvider2;
 
     ComponentImpl(AComponent aComponentParam, pkg2.AComponent aComponentParam2) {
       this.aComponent = aComponentParam;

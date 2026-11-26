@@ -41,6 +41,7 @@ import androidx.room3.compiler.processing.XExecutableParameterElement;
 import androidx.room3.compiler.processing.XHasModifiers;
 import androidx.room3.compiler.processing.XMethodElement;
 import androidx.room3.compiler.processing.XMethodType;
+import androidx.room3.compiler.processing.XNullability;
 import androidx.room3.compiler.processing.XType;
 import androidx.room3.compiler.processing.XTypeElement;
 import androidx.room3.compiler.processing.XVariableElement;
@@ -345,10 +346,13 @@ public final class AssistedInjectionAnnotations {
 
     // TODO(b/578079423): Align proxy parameter types with *_Factory#newInstance parameter types
     // when type parameters are used.
+    @SuppressWarnings("deprecation")
     private static XTypeName proxyType(XType type) {
       if (isTypePubliclyAccessible(type) && !containsTypeParameter(type)) {
         return type.asTypeName();
-      } else if (isDeclared(type) && isRawTypePubliclyAccessible(type)) {
+      } else if (
+          isDeclared(type)
+          && isRawTypePubliclyAccessible(type)) {
         return type.getRawType().asTypeName();
       }
       return XTypeName.ANY_OBJECT;
@@ -406,7 +410,10 @@ public final class AssistedInjectionAnnotations {
         return XParameterSpecs.of(name, paramType, nullability, compilerOptions);
       }
       XTypeName maskedTypeName =
-          asNullableTypeName(proxyType(paramType), nullability, compilerOptions);
+          asNullableTypeName(
+              proxyType(paramType).copy(paramType.getNullability() != XNullability.NONNULL),
+              nullability,
+              compilerOptions);
       return XParameterSpecs.builder(name, maskedTypeName)
           .addAnnotationNames(nullability.nonTypeUseNullableAnnotations())
           .build();

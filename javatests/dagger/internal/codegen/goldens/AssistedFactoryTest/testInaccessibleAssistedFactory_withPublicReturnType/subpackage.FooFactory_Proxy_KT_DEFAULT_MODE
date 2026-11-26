@@ -1,32 +1,28 @@
-package subpackage;
+package subpackage
 
-import dagger.internal.DaggerGenerated;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
-@FunctionalInterface
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public interface FooFactory_Proxy {
-  PublicFoo create(Object bar);
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public fun interface FooFactory_Proxy {
+  public fun create(bar: Any?): PublicFoo?
 
-  static Object createFactory(FooFactory_Proxy proxy) {
-    return new FooFactory() {
-      @Override
-      public PublicFoo create(InaccessibleBar bar) {
-        return proxy.create(bar);
-      }
-    };
+  public companion object {
+    @JvmStatic
+    public fun createFactory(proxy: FooFactory_Proxy): Any = object : FooFactory {
+      public override fun create(bar: InaccessibleBar?): PublicFoo? = proxy.create(bar)
+    }
   }
 }

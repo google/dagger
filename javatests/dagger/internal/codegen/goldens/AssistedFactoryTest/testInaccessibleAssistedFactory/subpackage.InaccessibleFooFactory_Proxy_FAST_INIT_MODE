@@ -26,7 +26,7 @@ public interface InaccessibleFooFactory_Proxy {
     return new InaccessibleFooFactory() {
       @Override
       public InaccessibleFoo create(String str, int i, List<String> list) {
-        return (InaccessibleFoo) proxy.create(str, i, list);
+        return (InaccessibleFoo) (proxy.create(str, i, list));
       }
     };
   }

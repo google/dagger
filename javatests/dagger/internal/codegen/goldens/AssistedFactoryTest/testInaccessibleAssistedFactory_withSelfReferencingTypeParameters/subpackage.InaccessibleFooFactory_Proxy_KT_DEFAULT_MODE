@@ -1,32 +1,33 @@
-package subpackage;
+package subpackage
 
-import dagger.internal.DaggerGenerated;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Comparable
+import kotlin.Nothing
+import kotlin.String
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
-@FunctionalInterface
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public interface InaccessibleFooFactory_Proxy {
-  Object create(String str);
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public fun interface InaccessibleFooFactory_Proxy {
+  public fun create(str: String?): Any
 
-  static <T extends Comparable<T>> Object createFactory(InaccessibleFooFactory_Proxy proxy) {
-    return new InaccessibleFooFactory<T>() {
-      @Override
-      public InaccessibleFoo<T> create(String str) {
-        return (InaccessibleFoo<T>) proxy.create(str);
-      }
-    };
+  public companion object {
+    @JvmStatic
+    public fun createFactory(proxy: InaccessibleFooFactory_Proxy): Any = createFactoryInternal<Nothing>(proxy)
+
+    private fun <T : Comparable<T?>?> createFactoryInternal(proxy: InaccessibleFooFactory_Proxy): Any = object : InaccessibleFooFactory<T> {
+      public override fun create(str: String?): InaccessibleFoo<T?>? = (proxy.create(str)) as InaccessibleFoo<T?>?
+    }
   }
 }

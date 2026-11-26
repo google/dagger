@@ -3,7 +3,6 @@ package test;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Provider;
 import dagger.internal.SingleCheck;
-import java.util.List;
 import javax.annotation.processing.Generated;
 import subpackage.FooFactory;
 import subpackage.FooFactory_Proxy;
@@ -83,7 +82,7 @@ final class DaggerTestComponent {
           case 0: // subpackage.FooFactory
           return (T) FooFactory_Proxy.createFactory(new FooFactory_Proxy() {
             @Override
-            public PublicFoo create(List bars) {
+            public PublicFoo create(Object bars) {
               return (PublicFoo) (PublicFoo_Factory.newInstance(bars));
             }
           });

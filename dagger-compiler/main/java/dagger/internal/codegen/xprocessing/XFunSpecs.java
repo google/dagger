@@ -71,8 +71,7 @@ public final class XFunSpecs {
     for (int i = 0; i < methodType.getParameterTypes().size(); i++) {
       XExecutableParameterElement parameter = method.getParameters().get(i);
       XType parameterType = methodType.getParameterTypes().get(i);
-      builder.addParameter(
-          XParameterSpecs.from(parameter, parameterType, compilerOptions));
+      builder.addParameter(XParameterSpecs.from(parameter, parameterType, compilerOptions));
     }
     return builder;
   }
@@ -83,14 +82,15 @@ public final class XFunSpecs {
     XMethodType methodType = method.asMemberOf(owner);
     Nullability nullability = Nullability.of(method);
     Builder builder =
-        // We're overriding the method so we have to use the jvm name here.
-        methodBuilder(method.getJvmName())
+        methodBuilder(XName.of(method.getJvmName(), getMethodReferenceName(method)))
             .isOverride(true)
             .addAnnotationNames(nullability.nonTypeUseNullableAnnotations())
             .addTypeVariables(methodType.getTypeVariables())
             .varargs(method.isVarArgs())
             .returns(methodType.getReturnType(), compilerOptions);
-    if (method.isPublic()) {
+    if (method.isInternal()) {
+      builder.visibility(VisibilityModifier.INTERNAL);
+    } else if (method.isPublic()) {
       builder.addModifiers(PUBLIC);
     } else if (method.isProtected()) {
       builder.addModifiers(PROTECTED);
@@ -99,6 +99,10 @@ public final class XFunSpecs {
   }
 
   public static Builder methodBuilder(String name) {
+    return methodBuilder(XName.of(name));
+  }
+
+  private static Builder methodBuilder(XName name) {
     return new Builder(Builder.Kind.FUNCTION).name(name);
   }
 
@@ -120,7 +124,7 @@ public final class XFunSpecs {
     private final List<XTypeName> typeVariableNames = new ArrayList<>();
     private final List<XTypeName> exceptionNames = new ArrayList<>();
     private final XCodeBlock.Builder bodyBuilder = XCodeBlock.builder();
-    private String name;
+    private XName name;
     private VisibilityModifier visibility = null;
     private boolean isStatic = false;
     private boolean isAbstract = false;
@@ -143,7 +147,7 @@ public final class XFunSpecs {
     }
 
     @CanIgnoreReturnValue
-    private Builder name(String name) {
+    private Builder name(XName name) {
       checkState(kind != Kind.CONSTRUCTOR);
       this.name = name;
       return this;
@@ -484,7 +488,8 @@ public final class XFunSpecs {
       }
 
       if (superConstructorParametersCodeBlock != null) {
-        toJavaPoet(builder).addStatement("super($L)", toJavaPoet(superConstructorParametersCodeBlock));
+        toJavaPoet(builder)
+            .addStatement("super($L)", toJavaPoet(superConstructorParametersCodeBlock));
         toKotlinPoet(builder)
             .callSuperConstructor(toKotlinPoet(superConstructorParametersCodeBlock));
       }

@@ -259,38 +259,44 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
       return binding.bindingElement().get();
     }
 
-    // For each @AssistedFactory-annotated type, we generates a class named "*_Impl" that implements
-    // that type.
-    //
-    // Note that this class internally delegates to the @AssistedInject generated class, which
-    // contains the actual implementation logic for creating the @AssistedInject type. The reason we
-    // need both of these generated classes is because while the @AssistedInject generated class
-    // knows how to create the @AssistedInject type, it doesn't know about all of the
-    // @AssistedFactory interfaces that it needs to extend when it's generated. Thus, the role of
-    // the @AssistedFactory generated class is purely to implement the @AssistedFactory type.
-    // Furthermore, while we could have put all of the logic into the @AssistedFactory generated
-    // class and not generate the @AssistedInject generated class, having the @AssistedInject
-    // generated class ensures we have proper accessibility to the @AssistedInject type, and reduces
-    // duplicate logic if there are multiple @AssistedFactory types for the same @AssistedInject
-    // type.
-    //
-    // Example:
-    // public class FooFactory_Impl implements FooFactory {
-    //   private final Foo_Factory delegateFactory;
-    //
-    //   FooFactory_Impl(Foo_Factory delegateFactory) {
-    //     this.delegateFactory = delegateFactory;
-    //   }
-    //
-    //   @Override
-    //   public Foo createFoo(AssistedDep assistedDep) {
-    //     return delegateFactory.get(assistedDep);
-    //   }
-    //
-    //   public static Provider<FooFactory> create(Foo_Factory delegateFactory) {
-    //     return InstanceFactory.create(new FooFactory_Impl(delegateFactory));
-    //   }
-    // }
+    /**
+     * Generates a class named {@code *_Impl} that implements each
+     * {@code @AssistedFactory}-annotated type.
+     *
+     * <p>Note that this class internally delegates to the {@code @AssistedInject} generated class,
+     * which contains the actual implementation logic for creating the {@code @AssistedInject} type.
+     * The reason we need both of these generated classes is because while the
+     * {@code @AssistedInject} generated class knows how to create the {@code @AssistedInject} type,
+     * it doesn't know about all of the {@code @AssistedFactory} interfaces that it needs to extend
+     * when it's generated. Thus, the role of the {@code @AssistedFactory} generated class is purely
+     * to implement the {@code @AssistedFactory} type. Furthermore, while we could have put all of
+     * the logic into the {@code @AssistedFactory} generated class and not generate the
+     * {@code @AssistedInject} generated class, having the {@code @AssistedInject} generated class
+     * ensures we have proper accessibility to the {@code @AssistedInject} type, and reduces
+     * duplicate logic if there are multiple {@code @AssistedFactory} types for the same
+     * {@code @AssistedInject} type.
+     *
+     * <p>Example:
+     *
+     * <pre><code>
+     * public class FooFactory_Impl implements FooFactory {
+     *   private final Foo_Factory delegateFactory;
+     *
+     *   FooFactory_Impl(Foo_Factory delegateFactory) {
+     *     this.delegateFactory = delegateFactory;
+     *   }
+     *
+     *   {@literal @}Override
+     *   public Foo createFoo(AssistedDep assistedDep) {
+     *     return delegateFactory.get(assistedDep);
+     *   }
+     *
+     *   public static Provider&lt;FooFactory&gt; create(Foo_Factory delegateFactory) {
+     *     return InstanceFactory.create(new FooFactory_Impl(delegateFactory));
+     *   }
+     * }
+     * </code></pre>
+     */
     @Override
     public ImmutableList<XTypeSpec> topLevelTypes(AssistedFactoryBinding binding) {
       XTypeElement factory = asTypeElement(binding.bindingElement().get());
@@ -381,10 +387,16 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
       return factory.getType().asTypeName();
     }
 
-    // @Override
-    // public Foo createFoo(AssistedDep assistedDep) {
-    //   return delegateFactory.get(assistedDep);
-    // }
+    /**
+     * Generates the factory method implementation, e.g.:
+     *
+     * <pre><code>
+     * {@literal @}Override
+     * public Foo createFoo(AssistedDep assistedDep) {
+     *   return delegateFactory.get(assistedDep);
+     * }
+     * </code></pre>
+     */
     private XFunSpec createMethod(AssistedFactoryMetadata metadata, String delegateName) {
       XCodeBlock instance =
           XCodeBlock.of(
@@ -437,22 +449,27 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
       return binding.bindingElement().get();
     }
 
-    // Generates a proxy interface for the @AssistedFactory-annotated class
-    // to bypass visibility issues
-    //
-    // Example:
-    // public interface FooFactory_Proxy {
-    //   Foo create(String publicParam, Object packagePrivateParam);
-    //
-    //   public static Object createFactory(FooFactory_Proxy proxy) {
-    //     return new FooFactory() {
-    //       @Override
-    //       public Foo create(String publicParam, PackagePrivateParam packagePrivateParam) {
-    //         return (Foo) proxy.create(publicParam, packagePrivateParam);
-    //       }
-    //     };
-    //   }
-    // }
+    /**
+     * Generates a proxy interface for the {@code @AssistedFactory}-annotated class to bypass
+     * visibility issues.
+     *
+     * <p>Example:
+     *
+     * <pre><code>
+     * public interface FooFactory_Proxy {
+     *   Foo create(String publicParam, Object packagePrivateParam);
+     *
+     *   public static Object createFactory(FooFactory_Proxy proxy) {
+     *     return new FooFactory() {
+     *       {@literal @}Override
+     *       public Foo create(String publicParam, PackagePrivateParam packagePrivateParam) {
+     *         return (Foo) proxy.create(publicParam, packagePrivateParam);
+     *       }
+     *     };
+     *   }
+     * }
+     * </code></pre>
+     */
     @Override
     public ImmutableList<XTypeSpec> topLevelTypes(AssistedFactoryBinding binding) {
       AssistedFactoryMetadata metadata = binding.assistedFactoryMetadata();
@@ -460,11 +477,17 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
           XTypeSpecs.functionalInterfaceBuilder(metadata.proxyClassName())
               .addModifiers(PUBLIC)
               .addFunction(abstractProxyMethod(metadata))
-              .addFunction(createFactoryMethod(metadata))
+              .addFunctions(createFactoryMethods(metadata))
               .build());
     }
 
-    // public abstract Foo create(String publicParam, Object packagePrivateParam);
+    /**
+     * Generates the abstract proxy method, e.g.:
+     *
+     * <pre>{@code
+     * public abstract Foo create(String publicParam, Object packagePrivateParam);
+     * }</pre>
+     */
     private XFunSpec abstractProxyMethod(AssistedFactoryMetadata metadata) {
       return methodBuilder(metadata.proxyMethodName())
           .addModifiers(PUBLIC, ABSTRACT)
@@ -473,25 +496,44 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
           .build();
     }
 
-    // public static <T> Object createFactory(FooFactory_Proxy proxy) {
-    //   return new FooFactory<T>() { ... };
-    // }
-    private XFunSpec createFactoryMethod(AssistedFactoryMetadata metadata) {
-      return methodBuilder(CREATE_FACTORY_METHOD_NAME)
-          .addModifiers(PUBLIC, STATIC)
-          .addTypeVariableNames(typeVariableNames(metadata.factory()))
-          .returns(XTypeName.ANY_OBJECT)
-          .addParameter(metadata.proxyInstanceName(), metadata.proxyClassName())
-          .addStatement("return %L", anonymousFactoryImpl(metadata))
-          .build();
+    /**
+     * Generates the static factory creation method(s), e.g.:
+     *
+     * <pre>{@code
+     * public static <T> Object createFactory(FooFactory_Proxy proxy) {
+     *   return new FooFactory<T>() { ... };
+     * }
+     * }</pre>
+     *
+     */
+    private ImmutableList<XFunSpec> createFactoryMethods(AssistedFactoryMetadata metadata) {
+      // Copy the factory's type variables (with their bounds) onto the method rather than resolving
+      // them to concrete types. Some bounds (e.g. self-referencing or intersection bounds) have no
+      // accessible concrete instantiation.
+      ImmutableList<XTypeName> typeVariableNames = typeVariableNames(metadata.factory());
+
+      return ImmutableList.of(
+          methodBuilder(CREATE_FACTORY_METHOD_NAME)
+              .addModifiers(PUBLIC, STATIC)
+              .addTypeVariableNames(typeVariableNames)
+              .returns(XTypeName.ANY_OBJECT)
+              .addParameter(metadata.proxyInstanceName(), metadata.proxyClassName())
+              .addStatement("return %L", anonymousFactoryImpl(metadata))
+              .build());
     }
 
-    // new FooFactory<T>() {
-    //   @Override
-    //   public Foo<T> create(T publicParam, PackagePrivateParam packagePrivateParam) {
-    //     return (Foo<T>) proxy.create(publicParam, packagePrivateParam);
-    //   }
-    // };
+    /**
+     * Generates the anonymous factory implementation, e.g.:
+     *
+     * <pre><code>
+     * new FooFactory&lt;T&gt;() {
+     *   {@literal @}Override
+     *   public Foo&lt;T&gt; create(T publicParam, PackagePrivateParam packagePrivateParam) {
+     *     return (Foo&lt;T&gt;) proxy.create(publicParam, packagePrivateParam);
+     *   }
+     * }
+     * </code></pre>
+     */
     private XTypeSpec anonymousFactoryImpl(AssistedFactoryMetadata metadata) {
       XTypeName factoryTypeName = metadata.factoryType().asTypeName();
       XTypeSpecs.Builder builder = XTypeSpecs.anonymousClassBuilder();
@@ -503,10 +545,16 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
       return builder.addFunction(factoryMethodImpl(metadata)).build();
     }
 
-    // @Override
-    // public Foo create(String publicParam, PackagePrivateParam packagePrivateParam) {
-    //   return (Foo) proxy.create(publicParam, packagePrivateParam);
-    // }
+    /**
+     * Generates the overridden factory method on the anonymous factory, e.g.:
+     *
+     * <pre><code>
+     * {@literal @}Override
+     * public Foo create(String publicParam, PackagePrivateParam packagePrivateParam) {
+     *   return (Foo) proxy.create(publicParam, packagePrivateParam);
+     * }
+     * </code></pre>
+     */
     private XFunSpec factoryMethodImpl(AssistedFactoryMetadata metadata) {
       XTypeName returnTypeName = metadata.factoryMethodType().getReturnType().asTypeName();
       XCodeBlock args =
@@ -515,16 +563,15 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
               .collect(toParametersCodeBlock());
       return overriding(metadata.factoryMethod(), metadata.factoryType(), compilerOptions)
           .addStatement(
+              "return %L",
               returnTypeName.equals(metadata.proxyReturnType())
                   ? XCodeBlock.of(
-                      "return %N.%N(%L)",
-                      metadata.proxyInstanceName(), metadata.proxyMethodName(), args)
-                  : XCodeBlock.of(
-                      "return (%T) %N.%N(%L)",
+                      "%N.%N(%L)", metadata.proxyInstanceName(), metadata.proxyMethodName(), args)
+                  : XCodeBlock.ofCast(
                       returnTypeName,
-                      metadata.proxyInstanceName(),
-                      metadata.proxyMethodName(),
-                      args))
+                      XCodeBlock.of(
+                          "%N.%N(%L)",
+                          metadata.proxyInstanceName(), metadata.proxyMethodName(), args)))
           .build();
     }
   }

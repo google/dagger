@@ -1,0 +1,32 @@
+package subpackage
+
+import dagger.`internal`.DaggerGenerated
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Nothing
+import kotlin.String
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
+
+@DaggerGenerated
+@Generated(
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
+)
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public fun interface InaccessibleFooFactory_Proxy {
+  public fun create(str: String): Any
+
+  public companion object {
+    @JvmStatic
+    public fun createFactory(proxy: InaccessibleFooFactory_Proxy): Any = createFactoryInternal<Nothing>(proxy)
+
+    private fun <T : SelfComparable<T>> createFactoryInternal(proxy: InaccessibleFooFactory_Proxy): Any = object : InaccessibleFooFactory<T> {
+      public override fun create(str: String): InaccessibleFoo<T> = (proxy.create(str)) as InaccessibleFoo<T>
+    }
+  }
+}

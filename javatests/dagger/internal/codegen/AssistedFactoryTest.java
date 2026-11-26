@@ -665,13 +665,11 @@ public class AssistedFactoryTest {
 
     CompilerTests.daggerCompiler(foo, fooFactory, component)
         .withProcessingOptions(compilerMode.processorOptions())
-        .compile(
-            subject -> {
-              subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("subpackage/InaccessibleFooFactory_Proxy"));
-            });
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+          assertSourceMatchesGolden(subject, "subpackage/InaccessibleFooFactory_Proxy");
+        });
   }
 
   @Test
@@ -720,12 +718,11 @@ public class AssistedFactoryTest {
 
     CompilerTests.daggerCompiler(foo, bar, fooFactory, component)
         .withProcessingOptions(compilerMode.processorOptions())
-        .compile(
-            subject -> {
-              subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
-              subject.generatedSource(goldenFileRule.goldenSource("subpackage/FooFactory_Proxy"));
-            });
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+          assertSourceMatchesGolden(subject, "subpackage/FooFactory_Proxy");
+        });
   }
 
   @Test
@@ -815,12 +812,10 @@ public class AssistedFactoryTest {
 
     CompilerTests.daggerCompiler(foo, fooFactory, component)
         .withProcessingOptions(compilerMode.processorOptions())
-        .compile(
-            subject -> {
-              subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("subpackage/InaccessibleFooFactory_Proxy"));
-            });
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          assertSourceMatchesGolden(subject, "subpackage/InaccessibleFooFactory_Proxy");
+        });
   }
 
   @Test
@@ -958,12 +953,271 @@ public class AssistedFactoryTest {
 
     CompilerTests.daggerCompiler(foo, fooFactory, component)
         .withProcessingOptions(compilerMode.processorOptions())
-        .compile(
-            subject -> {
-              subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("subpackage/InaccessibleFooFactory_Proxy"));
-            });
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          assertSourceMatchesGolden(subject, "subpackage/InaccessibleFooFactory_Proxy");
+        });
+  }
+
+  @Test
+  public void testInternalKotlinAssistedFactory_nullableAssistedParam() throws Exception {
+    Source param =
+        CompilerTests.kotlinSource(
+            "subpackage.InaccessibleParam.kt",
+            "package subpackage",
+            "",
+            "internal class InaccessibleParam");
+
+    Source foo =
+        CompilerTests.kotlinSource(
+            "subpackage.InaccessibleFoo.kt",
+            "package subpackage",
+            "",
+            "import dagger.assisted.Assisted",
+            "import dagger.assisted.AssistedFactory",
+            "import dagger.assisted.AssistedInject",
+            "",
+            "internal class InaccessibleFoo @AssistedInject constructor(@Assisted val param:"
+                + " InaccessibleParam?)",
+            "",
+            "@AssistedFactory",
+            "internal interface InaccessibleFooFactory {",
+            "  fun create(param: InaccessibleParam?): InaccessibleFoo",
+            "}");
+
+    Source component =
+        CompilerTests.kotlinSource(
+            "test.TestComponent.kt",
+            "package test",
+            "",
+            "import dagger.Component",
+            "import subpackage.InaccessibleFooFactory",
+            "",
+            "@Component",
+            "internal interface TestComponent {",
+            "  fun fooFactory(): InaccessibleFooFactory",
+            "}");
+
+    CompilerTests.daggerCompiler(param, foo, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> subject.hasErrorCount(0));
+  }
+
+  @Test
+  public void testInternalKotlinAssistedFactory_withSelfReferencingTypeParameters()
+      throws Exception {
+    Source foo =
+        CompilerTests.kotlinSource(
+            "subpackage.InaccessibleFoo.kt",
+            "package subpackage",
+            "",
+            "import dagger.assisted.Assisted",
+            "import dagger.assisted.AssistedFactory",
+            "import dagger.assisted.AssistedInject",
+            "",
+            "interface SelfComparable<T>",
+            "",
+            "class FooArg : SelfComparable<FooArg>",
+            "",
+            "internal class InaccessibleFoo<T : SelfComparable<T>> @AssistedInject constructor(",
+            "  @Assisted val str: String",
+            ")",
+            "",
+            "@AssistedFactory",
+            "internal interface InaccessibleFooFactory<T : SelfComparable<T>> {",
+            "  fun create(str: String): InaccessibleFoo<T>",
+            "}");
+
+    Source component =
+        CompilerTests.kotlinSource(
+            "test.TestComponent.kt",
+            "package test",
+            "",
+            "import dagger.Component",
+            "import subpackage.FooArg",
+            "import subpackage.InaccessibleFooFactory",
+            "",
+            "@Component",
+            "internal interface TestComponent {",
+            "  fun fooFactory(): InaccessibleFooFactory<FooArg>",
+            "}");
+
+    CompilerTests.daggerCompiler(foo, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          assertSourceMatchesGolden(subject, "subpackage/InaccessibleFooFactory_Proxy");
+        });
+  }
+
+  @Test
+  public void testInternalKotlinAssistedFactory_withIntersectionTypeParameters() {
+    Source foo =
+        CompilerTests.kotlinSource(
+            "subpackage.InaccessibleFoo.kt",
+            "package subpackage",
+            "",
+            "import dagger.assisted.Assisted",
+            "import dagger.assisted.AssistedFactory",
+            "import dagger.assisted.AssistedInject",
+            "",
+            "internal class InaccessibleFoo<T> @AssistedInject constructor(",
+            "  @Assisted val str: String",
+            ") where T : CharSequence, T : Comparable<T>",
+            "",
+            "@AssistedFactory",
+            "internal interface InaccessibleFooFactory<T> where T : CharSequence,"
+                + " T : Comparable<T> {",
+            "  fun create(str: String): InaccessibleFoo<T>",
+            "}");
+
+    Source component =
+        CompilerTests.kotlinSource(
+            "test.TestComponent.kt",
+            "package test",
+            "",
+            "import dagger.Component",
+            "import subpackage.InaccessibleFooFactory",
+            "",
+            "@Component",
+            "internal interface TestComponent {",
+            "  fun fooFactory(): InaccessibleFooFactory<String>",
+            "}");
+
+    CompilerTests.daggerCompiler(foo, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> subject.hasErrorCount(0));
+  }
+
+  @Test
+  public void testInternalKotlinAssistedFactory_withTypeParametersAndParameterNamedProxy()
+      throws Exception {
+    Source foo =
+        CompilerTests.kotlinSource(
+            "subpackage.InaccessibleFoo.kt",
+            "package subpackage",
+            "",
+            "import dagger.assisted.Assisted",
+            "import dagger.assisted.AssistedFactory",
+            "import dagger.assisted.AssistedInject",
+            "",
+            "internal class InaccessibleFoo<T> @AssistedInject constructor(",
+            "  @Assisted val proxy: String",
+            ")",
+            "",
+            "@AssistedFactory",
+            "internal interface InaccessibleFooFactory<T> {",
+            "  fun create(proxy: String): InaccessibleFoo<T>",
+            "}");
+
+    Source component =
+        CompilerTests.kotlinSource(
+            "test.TestComponent.kt",
+            "package test",
+            "",
+            "import dagger.Component",
+            "import subpackage.InaccessibleFooFactory",
+            "",
+            "@Component",
+            "internal interface TestComponent {",
+            "  fun fooFactory(): InaccessibleFooFactory<Int>",
+            "}");
+
+    CompilerTests.daggerCompiler(foo, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          assertSourceMatchesGolden(subject, "subpackage/InaccessibleFooFactory_Proxy");
+        });
+  }
+
+  @Test
+  public void testInternalKotlinAssistedFactory_withDeclarationSiteVariance() throws Exception {
+    Source foo =
+        CompilerTests.kotlinSource(
+            "subpackage.InaccessibleFoo.kt",
+            "package subpackage",
+            "",
+            "import dagger.assisted.Assisted",
+            "import dagger.assisted.AssistedFactory",
+            "import dagger.assisted.AssistedInject",
+            "",
+            "internal class InaccessibleFoo<out T, in U> @AssistedInject constructor(",
+            "  @Assisted arg: U",
+            ")",
+            "",
+            "@AssistedFactory",
+            "internal interface InaccessibleFooFactory<out T, in U> {",
+            "  fun create(arg: U): InaccessibleFoo<T, U>",
+            "}");
+
+    Source component =
+        CompilerTests.kotlinSource(
+            "test.TestComponent.kt",
+            "package test",
+            "",
+            "import dagger.Component",
+            "import subpackage.InaccessibleFooFactory",
+            "",
+            "@Component",
+            "internal interface TestComponent {",
+            "  fun fooFactory(): InaccessibleFooFactory<Number, Int>",
+            "}");
+
+    CompilerTests.daggerCompiler(foo, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          assertSourceMatchesGolden(subject, "subpackage/InaccessibleFooFactory_Proxy");
+        });
+  }
+
+  @Test
+  public void testKotlinAssistedFactory_withInternalFactoryMethod() throws Exception {
+    Source foo =
+        CompilerTests.kotlinSource(
+            "subpackage.PublicFoo.kt",
+            "package subpackage",
+            "",
+            "import dagger.assisted.Assisted",
+            "import dagger.assisted.AssistedFactory",
+            "import dagger.assisted.AssistedInject",
+            "",
+            "class PublicFoo @AssistedInject constructor(@Assisted val str: String)",
+            "",
+            "@AssistedFactory",
+            "abstract class FooFactory {",
+            "  internal abstract fun create(str: String): PublicFoo",
+            "}");
+
+    Source component =
+        CompilerTests.kotlinSource(
+            "test.TestComponent.kt",
+            "package test",
+            "",
+            "import dagger.Component",
+            "import subpackage.FooFactory",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  fun fooFactory(): FooFactory",
+            "}");
+
+    CompilerTests.daggerCompiler(foo, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          if (compilerMode.isKotlinCodegenEnabled()) {
+            assertSourceMatchesGolden(subject, "subpackage/FooFactory_Proxy");
+            if (compilerMode.isFastInitEnabled()) {
+              subject
+                  .generatedSourceFileWithPath("test/DaggerTestComponent.java")
+                  .contains("FooFactory_Proxy.createFactory");
+            }
+          } else {
+            assertSourceFileNotGenerated(subject, "subpackage/FooFactory_Proxy");
+          }
+        });
   }
 
   @Test
@@ -1011,12 +1265,11 @@ public class AssistedFactoryTest {
 
     CompilerTests.daggerCompiler(foo, bar, fooFactory, component)
         .withProcessingOptions(compilerMode.processorOptions())
-        .compile(
-            subject -> {
-              subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
-              subject.generatedSource(goldenFileRule.goldenSource("subpackage/FooFactory_Proxy"));
-            });
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+          assertSourceMatchesGolden(subject, "subpackage/FooFactory_Proxy");
+        });
   }
 
   @Test
@@ -1156,19 +1409,18 @@ public class AssistedFactoryTest {
 
     CompilerTests.daggerCompiler(foo, fooFactory, component)
         .withProcessingOptions(compilerMode.processorOptions())
-        .compile(
-            subject -> {
-              subject.hasErrorCount(0);
-              assertFileNotGenerated(subject, "subpackage/FooFactory_Proxy.java");
-              subject
-                  .generatedSourceFileWithPath("test/DaggerTestComponent.java")
-                  .doesNotContain("FooFactory_Proxy");
-              if (compilerMode.isFastInitEnabled()) {
-                subject
-                    .generatedSourceFileWithPath("test/DaggerTestComponent.java")
-                    .contains("new FooFactory()");
-              }
-            });
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          assertSourceFileNotGenerated(subject, "subpackage/FooFactory_Proxy");
+          subject
+              .generatedSourceFileWithPath("test/DaggerTestComponent.java")
+              .doesNotContain("FooFactory_Proxy");
+          if (compilerMode.isFastInitEnabled()) {
+            subject
+                .generatedSourceFileWithPath("test/DaggerTestComponent.java")
+                .contains("new FooFactory()");
+          }
+        });
   }
 
   @Test
@@ -1267,16 +1519,15 @@ public class AssistedFactoryTest {
 
     CompilerTests.daggerCompiler(foo, fooFactory, component)
         .withProcessingOptions(compilerMode.processorOptions())
-        .compile(
-            subject -> {
-              subject.hasErrorCount(0);
-              subject.generatedSourceFileWithPath("subpackage/FooFactory_Proxy.java");
-              if (compilerMode.isFastInitEnabled()) {
-                subject
-                    .generatedSourceFileWithPath("test/DaggerTestComponent.java")
-                    .contains("FooFactory_Proxy.createFactory");
-              }
-            });
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          assertGeneratedSourceFileWithPath(subject, "subpackage/FooFactory_Proxy");
+          if (compilerMode.isFastInitEnabled()) {
+            subject
+                .generatedSourceFileWithPath("test/DaggerTestComponent.java")
+                .contains("FooFactory_Proxy.createFactory");
+          }
+        });
   }
 
   @Test
@@ -1325,24 +1576,34 @@ public class AssistedFactoryTest {
 
     CompilerTests.daggerCompiler(foo, baseFactory, fooFactory, component)
         .withProcessingOptions(compilerMode.processorOptions())
-        .compile(
-            subject -> {
-              subject.hasErrorCount(0);
-              assertFileNotGenerated(subject, "subpackage/FooFactory_Proxy.java");
-              subject
-                  .generatedSourceFileWithPath("test/DaggerTestComponent.java")
-                  .doesNotContain("FooFactory_Proxy");
-              if (compilerMode.isFastInitEnabled()) {
-                subject
-                    .generatedSourceFileWithPath("test/DaggerTestComponent.java")
-                    .contains("new FooFactory()");
-              }
-            });
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          assertSourceFileNotGenerated(subject, "subpackage/FooFactory_Proxy");
+          subject
+              .generatedSourceFileWithPath("test/DaggerTestComponent.java")
+              .doesNotContain("FooFactory_Proxy");
+          if (compilerMode.isFastInitEnabled()) {
+            subject
+                .generatedSourceFileWithPath("test/DaggerTestComponent.java")
+                .contains("new FooFactory()");
+          }
+        });
   }
 
-  private static void assertFileNotGenerated(CompilationResultSubject subject, String filePath) {
+  private void assertSourceMatchesGolden(CompilationResultSubject subject, String goldenName) {
+    Source source = goldenFileRule.goldenSource(goldenName);
+    subject.generatedSource(source);
+  }
+
+  private void assertGeneratedSourceFileWithPath(
+      CompilationResultSubject subject, String goldenName) {
+    subject.generatedSourceFileWithPath(goldenName + ".java");
+  }
+
+  private void assertSourceFileNotGenerated(CompilationResultSubject subject, String goldenName) {
     AssertionError error =
-        assertThrows(AssertionError.class, () -> subject.generatedSourceFileWithPath(filePath));
+        assertThrows(
+            AssertionError.class, () -> assertGeneratedSourceFileWithPath(subject, goldenName));
     assertThat(error).hasMessageThat().contains("Didn't generate file");
   }
 

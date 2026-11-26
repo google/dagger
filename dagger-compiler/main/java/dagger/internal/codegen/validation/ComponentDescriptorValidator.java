@@ -88,6 +88,7 @@ import javax.tools.Diagnostic;
  *   <li>Validates scope hierarchy of component dependencies and subcomponents.
  *   <li>Reports errors if there are component dependency cycles.
  *   <li>Reports errors if any abstract modules have non-abstract instance binding methods.
+ *   <li>Reports errors if modules from dependencies are missing generated Dagger factories.
  *   <li>Validates component creator types.
  * </ul>
  */
@@ -99,6 +100,7 @@ public final class ComponentDescriptorValidator {
   private final ComponentHierarchyValidator componentHierarchyValidator;
   private final InjectionAnnotations injectionAnnotations;
   private final DaggerSuperficialValidation superficialValidation;
+  private final ModuleValidator moduleValidator;
 
   @Inject
   ComponentDescriptorValidator(
@@ -106,12 +108,14 @@ public final class ComponentDescriptorValidator {
       MethodSignatureFormatter methodSignatureFormatter,
       ComponentHierarchyValidator componentHierarchyValidator,
       InjectionAnnotations injectionAnnotations,
-      DaggerSuperficialValidation superficialValidation) {
+      DaggerSuperficialValidation superficialValidation,
+      ModuleValidator moduleValidator) {
     this.compilerOptions = compilerOptions;
     this.methodSignatureFormatter = methodSignatureFormatter;
     this.componentHierarchyValidator = componentHierarchyValidator;
     this.injectionAnnotations = injectionAnnotations;
     this.superficialValidation = superficialValidation;
+    this.moduleValidator = moduleValidator;
   }
 
   public ValidationReport validate(ComponentDescriptor component) {
@@ -260,6 +264,9 @@ public final class ComponentDescriptorValidator {
             }
           }
         }
+        // Detect modules from dependencies that were not processed by the Dagger compiler
+        // (missing *Factory types). See https://github.com/google/dagger/issues/5146.
+        moduleValidator.checkGeneratedFactoriesAvailable(module, report(component));
       }
     }
 

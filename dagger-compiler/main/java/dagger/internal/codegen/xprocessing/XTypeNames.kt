@@ -56,6 +56,8 @@ object XTypeNames {
   @JvmField val SUBCOMPONENT = XClassName.get("dagger", "Subcomponent")
   @JvmField val SUBCOMPONENT_BUILDER = XClassName.get("dagger", "Subcomponent", "Builder")
   @JvmField val SUBCOMPONENT_FACTORY = XClassName.get("dagger", "Subcomponent", "Factory")
+  @JvmField val ONLY_USED_BY = XClassName.get("dagger.pruning", "OnlyUsedBy")
+  @JvmField val BINDING_IDENTIFIER = XClassName.get("dagger.pruning", "BindingIdentifier")
 
   // Dagger Internal classnames
   @JvmField val DAGGER_GENERATED = XClassName.get("dagger.internal", "DaggerGenerated")

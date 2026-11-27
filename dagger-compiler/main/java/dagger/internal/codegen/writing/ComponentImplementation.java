@@ -954,6 +954,29 @@ public final class ComponentImplementation {
               componentRequestRepresentationsProvider.get().getComponentMethod(method));
         }
       }
+      // If a component class implements multiple interfaces, and these interfaces all
+      // declare a method with the same signature, we should only implement one of them,
+      // favoring a used method implementation over an unused implementation. The first pass above
+      // will try to add all methods that are declared as being used, the second pass here will add
+      // methods for unused entry points.
+      for (ComponentMethodDescriptor method : graph.prunedEntryPoints()) {
+        MethodSignature signature =
+            MethodSignature.ofDeclaredType(method.methodElement(), componentType);
+        if (methodDescriptors.add(signature)) {
+          addMethod(COMPONENT_METHOD, getUnusedComponentMethod(method));
+        }
+      }
+    }
+
+    public XFunSpec getUnusedComponentMethod(ComponentMethodDescriptor componentMethod) {
+      return overriding(
+              componentMethod.methodElement(),
+              graph.componentTypeElement().getType(),
+              compilerOptions)
+          .addStatement(
+              "throw new UnsupportedOperationException(\"This entry point is pruned because it has"
+                  + " been marked as unused, please update @OnlyUsedBy to reflect its usage.\")")
+          .build();
     }
 
     private void addChildComponents() {

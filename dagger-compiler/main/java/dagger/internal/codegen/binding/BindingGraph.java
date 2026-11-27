@@ -79,6 +79,7 @@ public abstract class BindingGraph {
       extends dagger.internal.codegen.model.BindingGraph {
     private static TopLevelBindingGraph create(
         ImmutableNetwork<Node, Edge> network,
+        ImmutableSet<DependencyRequest> prunedEntryPoints,
         boolean isFullBindingGraph) {
       TopLevelBindingGraph topLevelBindingGraph =
           new AutoValue_BindingGraph_TopLevelBindingGraph(network, isFullBindingGraph);
@@ -103,12 +104,14 @@ public abstract class BindingGraph {
       topLevelBindingGraph.subcomponentNodes = subcomponentNodesBuilder.build();
       topLevelBindingGraph.frameworkTypeBindings =
           frameworkRequestBindingSet(network, topLevelBindingGraph.bindings());
+      topLevelBindingGraph.prunedEntryPoints = prunedEntryPoints;
       return topLevelBindingGraph;
     }
 
     private ImmutableMap<ComponentPath, ComponentNode> componentNodes;
     private ImmutableSetMultimap<ComponentNode, ComponentNode> subcomponentNodes;
     private ImmutableSet<Binding> frameworkTypeBindings;
+    private ImmutableSet<DependencyRequest> prunedEntryPoints;
 
     TopLevelBindingGraph() {}
 
@@ -124,6 +127,15 @@ public abstract class BindingGraph {
     /** Returns the set of subcomponent nodes of the given component node. */
     ImmutableSet<ComponentNode> subcomponentNodes(ComponentNode componentNode) {
       return subcomponentNodes.get(componentNode);
+    }
+
+    /**
+     * Returns the set of unused @OnlyUsedBy annotated entry point methods for all components.
+     *
+     * <p>Returns an empty set if this is a full binding graph.
+     */
+    ImmutableSet<DependencyRequest> prunedEntryPoints() {
+      return prunedEntryPoints;
     }
 
     // This overrides dagger.internal.codegen.model.BindingGraph to memoize the output.
@@ -208,10 +220,12 @@ public abstract class BindingGraph {
 
   static BindingGraph create(
         ImmutableNetwork<Node, Edge> network,
+        ImmutableSet<DependencyRequest> prunedEntryPoints,
         boolean isFullBindingGraph) {
     TopLevelBindingGraph topLevelBindingGraph =
         TopLevelBindingGraph.create(
             network,
+            prunedEntryPoints,
             isFullBindingGraph);
     return create(Optional.empty(), topLevelBindingGraph.rootComponentNode(), topLevelBindingGraph);
   }
@@ -296,10 +310,27 @@ public abstract class BindingGraph {
     return ((ComponentNodeImpl) componentNode()).componentDescriptor();
   }
 
+  /**
+   * Returns all unused @OnlyUsedBy annotated entry points for this component.
+   *
+   * <p>Returns an empty set if this is a full binding graph.
+   */
+  @Memoized
+  public ImmutableSet<ComponentMethodDescriptor> prunedEntryPoints() {
+    return componentDescriptor().entryPointMethods().stream()
+        .filter(
+            method ->
+                topLevelBindingGraph()
+                    .prunedEntryPoints()
+                    .contains(method.dependencyRequest().get()))
+        .collect(toImmutableSet());
+  }
+
   /** Returns all entry point methods for this component. */
   @Memoized
   public ImmutableSet<ComponentMethodDescriptor> entryPointMethods() {
     return componentDescriptor().entryPointMethods().stream()
+        .filter(method -> !prunedEntryPoints().contains(method))
         .collect(toImmutableSet());
   }
 

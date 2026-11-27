@@ -16,9 +16,13 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room3.compiler.processing.XElementKt.isTypeElement;
 import static dagger.internal.codegen.binding.BindingType.PRODUCTION;
 
+import androidx.room3.compiler.codegen.XClassName;
+import androidx.room3.compiler.processing.XElement;
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import dagger.internal.codegen.model.BindingKind;
@@ -28,6 +32,8 @@ import dagger.internal.codegen.model.DaggerTypeElement;
 import dagger.internal.codegen.model.DependencyRequest;
 import dagger.internal.codegen.model.Key;
 import dagger.internal.codegen.model.Scope;
+import dagger.internal.codegen.xprocessing.XElements;
+import dagger.internal.codegen.xprocessing.XTypeNames;
 import java.util.Optional;
 import javax.inject.Inject;
 
@@ -113,6 +119,35 @@ public abstract class BindingNode implements dagger.internal.codegen.model.Bindi
   @Override
   public final String toString() {
     return declarationFormatter.format(delegate());
+  }
+
+  /**
+   * Returns the type that identifies the binding.
+   *
+   * <p>This is the type that is referenced by @BindingIdentifier. If @BindingIdentifier is not
+   * specified on the binding, then @Inject binding will return its own type as the identifier, and
+   * all other types of bindings will return empty.
+   */
+  @Memoized
+  public Optional<XClassName> bindingIdentifier() {
+    if (bindingElement().isPresent()) {
+      XElement element = bindingElement().get().xprocessing();
+      if (element.hasAnnotation(XTypeNames.BINDING_IDENTIFIER)) {
+        return Optional.of(
+            element
+                .getAnnotation(XTypeNames.BINDING_IDENTIFIER)
+                .getAsType("value")
+                .getTypeElement()
+                .asClassName());
+      }
+      if (InjectionAnnotations.hasInjectAnnotation(element)) {
+        XElement enclosingElement = element.getEnclosingElement();
+        if (enclosingElement != null && isTypeElement(enclosingElement)) {
+          return Optional.of(XElements.asTypeElement(enclosingElement).asClassName());
+        }
+      }
+    }
+    return Optional.empty();
   }
 
   public BindingNode withBindingType(BindingType bindingType) {

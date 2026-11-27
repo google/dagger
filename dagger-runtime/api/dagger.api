@@ -314,3 +314,11 @@ public abstract interface annotation class dagger/multibindings/StringKey : java
 	public abstract fun value ()Ljava/lang/String;
 }
 
+public abstract interface annotation class dagger/pruning/BindingIdentifier : java/lang/annotation/Annotation {
+	public abstract fun value ()Ljava/lang/Class;
+}
+
+public abstract interface annotation class dagger/pruning/OnlyUsedBy : java/lang/annotation/Annotation {
+	public abstract fun value ()[Ljava/lang/Class;
+}
+

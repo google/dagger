@@ -112,13 +112,16 @@ public final class BindingGraphFactory {
     resolver.resolve(createFullBindingGraph);
 
     MutableNetwork<Node, Edge> network = resolver.network;
+    ImmutableSet<DependencyRequest> prunableEntryPoints = ImmutableSet.of();
     if (!createFullBindingGraph) {
+      prunableEntryPoints = PrunableEntryPoints.prune(network);
       unreachableNodes(network.asGraph(), resolver.componentNode).forEach(network::removeNode);
     }
 
     network = BindingGraphTransformations.withFixedBindingTypes(network);
     return BindingGraph.create(
         ImmutableNetwork.copyOf(network),
+        prunableEntryPoints,
         createFullBindingGraph);
   }
 

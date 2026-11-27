@@ -462,6 +462,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">A pluggable visitor for <a href="dagger/spi/model/BindingGraph.html" title="class in dagger.spi.model"><code>BindingGraph</code></a>.</div>
 </dd>
+<dt><a href="dagger/pruning/BindingIdentifier.html" class="type-name-link" title="annotation interface in dagger.pruning">BindingIdentifier</a> - Annotation Interface in <a href="dagger/pruning/package-summary.html">dagger.pruning</a></dt>
+<dd>
+<div class="block">Assigns an explicit identifier class to a binding so it can be referenced by <a href="dagger/pruning/OnlyUsedBy.html" title="annotation interface in dagger.pruning"><code>OnlyUsedBy</code></a>.</div>
+</dd>
 <dt><a href="dagger/model/BindingKind.html" class="type-name-link" title="enum class in dagger.model">BindingKind</a> - Enum Class in <a href="dagger/model/package-summary.html">dagger.model</a></dt>
 <dd>
 <div class="block">Represents the different kinds of <a href="dagger/model/Binding.html" title="interface in dagger.model"><code>Binding</code></a>s that can exist in a binding graph.</div>
@@ -1007,6 +1011,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="dagger/producers/monitoring/package-summary.html">dagger.producers.monitoring</a> - package dagger.producers.monitoring</dt>
 <dd>
 <div class="block">This package provides hooks for monitoring producers.</div>
+</dd>
+<dt><a href="dagger/pruning/package-summary.html">dagger.pruning</a> - package dagger.pruning</dt>
+<dd>
+<div class="block">This package contains annotations for pruning unused Dagger entry point methods.</div>
 </dd>
 <dt><a href="dagger/spi/package-summary.html">dagger.spi</a> - package dagger.spi</dt>
 <dd>
@@ -2425,6 +2433,11 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="dagger/android/support/DaggerAppCompatActivity.html#onCreate(android.os.Bundle)" class="member-name-link">onCreate(Bundle)</a> - Method in class dagger.android.support.<a href="dagger/android/support/DaggerAppCompatActivity.html" title="class in dagger.android.support">DaggerAppCompatActivity</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="dagger/pruning/OnlyUsedBy.html" class="type-name-link" title="annotation interface in dagger.pruning">OnlyUsedBy</a> - Annotation Interface in <a href="dagger/pruning/package-summary.html">dagger.pruning</a></dt>
+<dd>
+<div class="block">Marks a component or Hilt <code>@EntryPoint</code> method as only being called by bindings matching
+ the given binding identifiers.</div>
+</dd>
 <dt><a href="dagger/spi/BindingGraphPlugin.html#onPluginEnd()" class="member-name-link">onPluginEnd()</a> - Method in interface dagger.spi.<a href="dagger/spi/BindingGraphPlugin.html" title="interface in dagger.spi">BindingGraphPlugin</a></dt>
 <dd>
 <div class="block">Perform any extra work after the plugin finished all its visiting.</div>
@@ -3246,6 +3259,14 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="dagger/multibindings/StringKey.html#value()" class="member-name-link">value()</a> - Element in annotation interface dagger.multibindings.<a href="dagger/multibindings/StringKey.html" title="annotation interface in dagger.multibindings">StringKey</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="dagger/pruning/BindingIdentifier.html#value()" class="member-name-link">value()</a> - Element in annotation interface dagger.pruning.<a href="dagger/pruning/BindingIdentifier.html" title="annotation interface in dagger.pruning">BindingIdentifier</a></dt>
+<dd>
+<div class="block">The identifier class representing this binding for <a href="dagger/pruning/OnlyUsedBy.html" title="annotation interface in dagger.pruning"><code>OnlyUsedBy</code></a>.</div>
+</dd>
+<dt><a href="dagger/pruning/OnlyUsedBy.html#value()" class="member-name-link">value()</a> - Element in annotation interface dagger.pruning.<a href="dagger/pruning/OnlyUsedBy.html" title="annotation interface in dagger.pruning">OnlyUsedBy</a></dt>
+<dd>
+<div class="block">The binding identifier classes whose reachability retains this entry point method.</div>
+</dd>
 <dt><a href="dagger/model/BindingKind.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class dagger.model.<a href="dagger/model/BindingKind.html" title="enum class in dagger.model">BindingKind</a></dt>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>

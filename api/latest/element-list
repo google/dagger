@@ -32,5 +32,6 @@ dagger.model
 dagger.multibindings
 dagger.producers
 dagger.producers.monitoring
+dagger.pruning
 dagger.spi
 dagger.spi.model

@@ -17,6 +17,6 @@
 /**
  * This package contains Hilt's built-in {@link dagger.Component}s for Android.
  *
- * @see <a href="https://dagger.dev/hilt/components.md">Hilt Components</a>
+ * @see <a href="https://dagger.dev/hilt/components">Hilt Components</a>
  */
 package dagger.hilt.android.components;

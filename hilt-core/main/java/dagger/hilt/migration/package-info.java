@@ -17,6 +17,6 @@
 /**
  * This package contains APIs to help migrating a codebase to Hilt.
  *
- * @see <a href="https://dagger.dev/hilt/migration">Migration to Hilt</a>
+ * @see <a href="https://dagger.dev/hilt/migration-guide">Migration to Hilt</a>
  */
 package dagger.hilt.migration;

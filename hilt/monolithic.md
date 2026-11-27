@@ -27,7 +27,8 @@ harder to trace.
 
 For keeping bindings private to only code that should use them, we recommend
 using qualifier annotations that are protected through restricted visibility or
-using an [SPI](https://dagger.dev/dev-guide/spi "Service Provider Interface")
+using an
+[SPI](https://dagger.dev/dev-guide/spi.html "Service Provider Interface")
 plugin to enforce separation of code.
 
 ## Simplicity for configuration
@@ -53,8 +54,9 @@ across many activities and be multiplied further by many fragments or views.
 ## fastInit and start up latency
 
 Some users may be worried about how this will affect startup latency. If you are
-using the [fastInit](https://dagger.dev/compiler-options#fastinit-mode) compile
-option, monolithic components should not have a noticeable effect on startup
-latency. This is the default setting for Hilt gradle users using the
+using the
+[fastInit](https://dagger.dev/dev-guide/compiler-options.html#fast-init)
+compile option, monolithic components should not have a noticeable effect on
+startup latency. This is the default setting for Hilt gradle users using the
 [plugin](gradle-setup.md#hilt-gradle-plugin) and should generally be the Dagger
 compilation mode used on Android.

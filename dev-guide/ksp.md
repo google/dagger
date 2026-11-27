@@ -43,7 +43,8 @@ when necessary (e.g. see https://github.com/google/ksp/issues/2816).
 ## New Dagger SPI plugin (with KSP support)
 
 Dagger's KSP processor requires all registered
-[Dagger SPI plugins](https://dagger.dev/dev-guide/spi) to be converted to the
+[Dagger SPI plugins](https://dagger.dev/dev-guide/spi.html) to be
+converted to the
 [new Dagger SPI plugin API](https://dagger.dev/api/latest/dagger/spi/model/package-summary.html).
 The new API provides wrappers around the Javac and KSP model types that allows
 users to write plugins that support both Javac and KSP. The full list of

@@ -598,6 +598,108 @@ calling the method, and the component will treat the instance as `null`.
 `@BindsInstance` methods should be preferred to writing a `@Module` with
 constructor arguments and immediately providing those values.
 
+## Prunable component methods {#prunable-component-methods}
+
+Dagger treats every `@Component` and `@Subcomponent` entry point as used because
+it cannot tell at compile time whether a method will be called. However, there
+are some cases where an entry point is only ever used by a specific set of
+bindings. In such cases, [`@OnlyUsedBy`] lets you declare which bindings
+call an entry point so Dagger can prune it whenever those bindings are unused:
+
+```java
+@UserScoped
+@Subcomponent(modules = UserModule.class)
+interface UserComponent extends AuthManager.UserComponentEntryPoint {
+  @Subcomponent.Factory
+  interface Factory {
+    UserComponent create(@BindsInstance UserId userId);
+  }
+}
+
+@Singleton
+class AuthManager {
+  interface UserComponentEntryPoint {
+    @OnlyUsedBy(AuthManager.class)
+    UserData userData();
+  }
+
+  private final UserComponent.Factory userComponentFactory;
+
+  @Inject
+  AuthManager(UserComponent.Factory userComponentFactory) {
+    this.userComponentFactory = userComponentFactory;
+  }
+
+  UserData loadUserData(UserId userId) {
+    return userComponentFactory.create(userId).userData();
+  }
+}
+```
+
+In the above example, if `AuthManager` is unused in the component graph, Dagger
+prunes `userData()` before validation and code generation. While the method
+still exists in the generated component, calling it will result in an
+`UnsupportedOperationException`.
+
+The value passed to `@OnlyUsedBy` is a binding identifier. For an `@Inject`
+constructor binding, the default identifier is the class itself. For a
+`@Provides` or `@Binds` method you will need to define a custom binding
+identifier using [`@BindingIdentifier`]:
+
+```java
+@Module
+interface AuthModule {
+  interface AuthManagerIdentifier {}
+
+  interface UserComponentEntryPoint {
+    @OnlyUsedBy(AuthManagerIdentifier.class)
+    UserData userData();
+  }
+
+  @Provides
+  @Singleton
+  @BindingIdentifier(AuthManagerIdentifier.class)
+  static AuthManager provideAuthManager(
+      UserComponent.Factory userComponentFactory) {
+    return new AuthManager(
+        userId -> userComponentFactory.create(userId).userData());
+  }
+}
+```
+
+You can also assign a custom identifier for an `@Inject` constructor binding by
+annotating the constructor with [`@BindingIdentifier`]:
+
+```java
+@Singleton
+class AuthManager {
+  interface AuthManagerIdentifier {}
+
+  interface UserComponentEntryPoint {
+    @OnlyUsedBy(AuthManagerIdentifier.class)
+    UserData userData();
+  }
+
+  private final UserComponent.Factory userComponentFactory;
+
+  @Inject
+  @BindingIdentifier(AuthManagerIdentifier.class)
+  AuthManager(UserComponent.Factory userComponentFactory) {
+    this.userComponentFactory = userComponentFactory;
+  }
+
+  ...
+}
+```
+
+**Warning:** This feature should be used with care, since if the component
+method is used in a place that isn't declared with `@OnlyUsedBy`, that usage may
+fail at runtime with an `UnsupportedOperationException` indicating that the
+entry point was pruned. This feature is really only useful when the binding
+returned by the entry point isn't injectable from the binding calling the entry
+point. Otherwise, you could (and should) just inject the binding directly.
+{: .c-callouts__warning }
+
 ## Compile-time Validation
 
 The Dagger [annotation processor][Annotation Processor] is strict and will cause
@@ -649,6 +751,7 @@ the [README][installation] for more information.
 [Android Application]: http://developer.android.com/reference/android/app/Application.html
 [Android Dependency Injection Guide]: https://developer.android.com/training/dependency-injection
 [Annotation Processor]: http://docs.oracle.com/javase/6/docs/api/javax/annotation/processing/package-summary.html
+[`@BindingIdentifier`]: https://dagger.dev/api/latest/dagger/pruning/BindingIdentifier.html
 [`@BindsOptionalOf`]: https://dagger.dev/api/latest/dagger/BindsOptionalOf.html
 [BindsInstance]: https://dagger.dev/api/latest/dagger/BindsInstance.html
 [Builder Pattern]: http://en.wikipedia.org/wiki/Builder_pattern
@@ -656,16 +759,17 @@ the [README][installation] for more information.
 [Component#dependencies]: https://dagger.dev/api/latest/dagger/Component.html#dependencies--
 [Component#provision-methods]: https://dagger.dev/api/latest/dagger/Component.html#provision-methods
 [Component]: https://dagger.dev/api/latest/dagger/Component.html
-[Dagger Tutorial]: https://dagger.dev/tutorial/
+[Dagger Tutorial]: https://dagger.dev/tutorial/index.html
 [Documented]: http://docs.oracle.com/javase/7/docs/api/java/lang/annotation/Documented.html
 [installation]: https://github.com/google/dagger/blob/master/README.md#installation
 [guava-optional]: https://guava.dev/releases/27.0-jre/api/docs/com/google/common/base/Optional.html
-[Hilt]: https://dagger.dev/hilt/
+[Hilt]: https://dagger.dev/hilt/index.html
 [`javax.inject.Inject`]: http://docs.oracle.com/javaee/7/api/javax/inject/Inject.html
 [jdk-optional]: https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html
 [Lazy]: https://dagger.dev/api/latest/dagger/Lazy.html
 [Module]: https://dagger.dev/api/latest/dagger/Module.html
 [Named]: http://docs.oracle.com/javaee/7/api/javax/inject/Named.html
+[`@OnlyUsedBy`]: https://dagger.dev/api/latest/dagger/pruning/OnlyUsedBy.html
 [Provider]: http://docs.oracle.com/javaee/7/api/javax/inject/Provider.html
 [Provides]: https://dagger.dev/api/latest/dagger/Provides.html
 [Qualifier]: http://docs.oracle.com/javaee/7/api/javax/inject/Qualifier.html

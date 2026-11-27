@@ -101,13 +101,14 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     steps:
       - name: 'Install Java ${{ env.USE_JAVA_VERSION_FOR_BAZEL }}'
         uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
         with:
           distribution: '${{ env.USE_JAVA_DISTRIBUTION }}'
           java-version: '${{ env.USE_JAVA_VERSION_FOR_BAZEL }}'
-          server-id: sonatype-central-staging
+          server-id: oss-exit-gate
           server-username: CI_DEPLOY_USERNAME
           server-password: CI_DEPLOY_PASSWORD
           gpg-private-key: ${{ secrets.CI_GPG_PRIVATE_KEY }}
@@ -141,23 +142,39 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-      - name: Publish artifacts
+      - name: 'Authenticate to Google Cloud (OSS Exit Gate)'
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: 'projects/305452601764/locations/global/workloadIdentityPools/builders/providers/github'
+      - name: 'Set up Cloud SDK'
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+      - name: 'Clean up failed staging attempt for this exact version (if any)'
+        run: util/cleanup-exit-gate-staging.sh "${DAGGER_RELEASE_VERSION}"
+        shell: bash
+      - name: 'Publish artifacts to OSS Exit Gate staging'
         run: |
+          set -euo pipefail
+          export CI_DEPLOY_USERNAME="oauth2accesstoken"
+          export CI_DEPLOY_PASSWORD="$(gcloud auth print-access-token)"
+          echo "::add-mask::${CI_DEPLOY_PASSWORD}"
           util/deploy-all.sh \
             "gpg:sign-and-deploy-file" \
             "${DAGGER_RELEASE_VERSION}" \
-            "-DrepositoryId=sonatype-central-staging" \
-            "-Durl=https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/"
+            "-DrepositoryId=oss-exit-gate" \
+            "-Durl=https://us-maven.pkg.dev/oss-exit-gate-prod/dagger--mavencentral"
         shell: bash
         env:
-          CI_DEPLOY_USERNAME: ${{ secrets.CI_DEPLOY_USERNAME }}
-          CI_DEPLOY_PASSWORD: ${{ secrets.CI_DEPLOY_PASSWORD }}
           CI_GPG_PASSPHRASE: ${{ secrets.CI_GPG_PASSPHRASE }}
-      - name: 'Upload artifacts to Sonatype'
-        run: util/upload-to-sonatype.sh
-        shell: bash
+      - name: 'Upload OSS Exit Gate publishing manifest'
         env:
-          SONATYPE_TOKEN: ${{ secrets.SONATYPE_TOKEN }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          python3 util/generate-exit-gate-manifest.py "${DAGGER_RELEASE_VERSION}" manifest.json
+          gcloud storage cp manifest.json \
+            "gs://oss-exit-gate-prod-projects-bucket/dagger/mavencentral/manifests/manifest-${DAGGER_RELEASE_VERSION}-${RUN_ID}-${RUN_ATTEMPT}.json"
+        shell: bash
       - name: 'Set git credentials'
         run: |
             git config --global user.email "dagger-dev+github@google.com"
